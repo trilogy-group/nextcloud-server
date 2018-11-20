@@ -6,14 +6,20 @@ Dockefile is created on top of `php:5-apache-jessie` image.
 
 - Clone the repository on your machine https://github.com/trilogy-group/nextcloud-server
 - Open a terminal session to nextcloud-server/docker folder
+- Run `git submodule update --init`
 - Run `docker-compose build`
 - Run `docker-compose up -d`
 - Run `docker exec -it nextcloud bash`
+- Run `chown -R www-data .`
+- The application should be running by now. Navigate to `localhost` from your host to access the web application.
 - When you finish working with the container, type `exit`
 - Run `docker-compose down` to stop the service.
 
 ## Configuring NextCloud
 When you run the application first time, it will require some inputs from you. Make sure to provide correct database parameters (which can be found under `nextcloud-server/docker/docker-compose.yml` file. 
+
+## Troubleshooting
+Sometimes you might receive 500 error codes. This happens after restarting the container often. Simply delete the content of `config` folder and restart the containers to fix this issue.
 
 ## Build the image
 
