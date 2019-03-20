@@ -2,12 +2,11 @@ OC.L10N.register(
     "files_trashbin",
     {
     "Deleted files" : "Izbrisane datoteke",
+    "restored" : "obnovljeno",
     "Restore" : "Obnovi",
-    "Delete" : "Izbriši",
     "Delete permanently" : "Trajno izbriši",
     "This operation is forbidden" : "To dejanje ni dovoljeno!",
     "This directory is unavailable, please check the logs or contact the administrator" : "Mapa ni na voljo. Preverite dnevnik in stopite v stik s skrbnikom sistema.",
-    "restored" : "obnovljeno",
     "No deleted files" : "Ni izbrisanih datotek",
     "You will be able to recover deleted files from here" : "Izbrisane datoteke je mogoče povrniti na tem mestu",
     "No entries found in this folder" : "V tej mapi ni najdenih predmetov.",
@@ -15,6 +14,7 @@ OC.L10N.register(
     "Name" : "Ime",
     "Actions" : "Dejanja",
     "Deleted" : "Izbrisano",
+    "Delete" : "Izbriši",
     "Couldn't delete %s permanently" : "Datoteke %s ni mogoče trajno izbrisati.",
     "Couldn't restore %s" : "Datoteke %s ni mogoče obnoviti.",
     "Error" : "Napaka"

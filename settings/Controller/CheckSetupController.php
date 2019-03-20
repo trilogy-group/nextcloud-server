@@ -34,11 +34,13 @@ use bantu\IniGetWrapper\IniGetWrapper;
 use DirectoryIterator;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
+use Doctrine\DBAL\Types\Type;
 use GuzzleHttp\Exception\ClientException;
 use OC;
 use OC\AppFramework\Http;
 use OC\DB\Connection;
 use OC\DB\MissingIndexInformation;
+use OC\DB\SchemaWrapper;
 use OC\IntegrityCheck\Checker;
 use OC\Lock\NoopLockingProvider;
 use OC\MemoryInfo;
@@ -130,11 +132,9 @@ class CheckSetupController extends Controller {
 			return false;
 		}
 
-		$siteArray = ['www.nextcloud.com',
-						'www.startpage.com',
-						'www.eff.org',
-						'www.edri.org',
-			];
+		$siteArray = $this->config->getSystemValue('connectivity_check_domains', [
+			'www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org'
+		]);
 
 		foreach($siteArray as $site) {
 			if ($this->isSiteReachable($site)) {
@@ -263,7 +263,7 @@ class CheckSetupController extends Controller {
 	 * @return bool
 	 */
 	protected function isPhpOutdated() {
-		if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+		if (version_compare(PHP_VERSION, '7.1.0', '<')) {
 			return true;
 		}
 
@@ -289,9 +289,14 @@ class CheckSetupController extends Controller {
 		$trustedProxies = $this->config->getSystemValue('trusted_proxies', []);
 		$remoteAddress = $this->request->getHeader('REMOTE_ADDR');
 
-		if (\is_array($trustedProxies) && \in_array($remoteAddress, $trustedProxies)) {
+		if (empty($trustedProxies) && $this->request->getHeader('X-Forwarded-Host')) {
+			return false;
+		}
+
+		if (\is_array($trustedProxies) && \in_array($remoteAddress, $trustedProxies, true)) {
 			return $remoteAddress !== $this->request->getRemoteAddress();
 		}
+
 		// either not enabled or working correctly
 		return true;
 	}
@@ -448,25 +453,6 @@ Raw output
 		return $indexInfo->getListOfMissingIndexes();
 	}
 
-	/**
-	 * warn if outdated version of a memcache module is used
-	 */
-	protected function getOutdatedCaches(): array {
-		$caches = [
-			'apcu'	=> ['name' => 'APCu', 'version' => '4.0.6'],
-			'redis'	=> ['name' => 'Redis', 'version' => '2.2.5'],
-		];
-		$outdatedCaches = [];
-		foreach ($caches as $php_module => $data) {
-			$isOutdated = extension_loaded($php_module) && version_compare(phpversion($php_module), $data['version'], '<');
-			if ($isOutdated) {
-				$outdatedCaches[] = $data;
-			}
-		}
-
-		return $outdatedCaches;
-	}
-
 	protected function isSqliteUsed() {
 		return strpos($this->config->getSystemValue('dbtype'), 'sqlite') !== false;
 	}
@@ -529,8 +515,8 @@ Raw output
 		return [];
 	}
 
-	protected function isPhpMailerUsed(): bool {
-		return $this->config->getSystemValue('mail_smtpmode', 'php') === 'php';
+	protected function isPHPMailerUsed(): bool {
+		return $this->config->getSystemValue('mail_smtpmode', 'smtp') === 'php';
 	}
 
 	protected function hasOpcacheLoaded(): bool {
@@ -585,6 +571,100 @@ Raw output
 	}
 
 	/**
+	 * Checks for potential PHP modules that would improve the instance
+	 *
+	 * @return string[] A list of PHP modules that is recommended
+	 */
+	protected function hasRecommendedPHPModules(): array {
+		$recommendedPHPModules = [];
+
+		if (!function_exists('grapheme_strlen')) {
+			$recommendedPHPModules[] = 'intl';
+		}
+
+		if ($this->config->getAppValue('theming', 'enabled', 'no') === 'yes') {
+			if (!extension_loaded('imagick')) {
+				$recommendedPHPModules[] = 'imagick';
+			}
+		}
+
+		return $recommendedPHPModules;
+	}
+
+	protected function isMysqlUsedWithoutUTF8MB4(): bool {
+		return ($this->config->getSystemValue('dbtype', 'sqlite') === 'mysql') && ($this->config->getSystemValue('mysql.utf8mb4', false) === false);
+	}
+
+	protected function hasBigIntConversionPendingColumns(): array {
+		// copy of ConvertFilecacheBigInt::getColumnsByTable()
+		$tables = [
+			'activity' => ['activity_id', 'object_id'],
+			'activity_mq' => ['mail_id'],
+			'filecache' => ['fileid', 'storage', 'parent', 'mimetype', 'mimepart', 'mtime', 'storage_mtime'],
+			'mimetypes' => ['id'],
+			'storages' => ['numeric_id'],
+		];
+
+		$schema = new SchemaWrapper($this->db);
+		$isSqlite = $this->db->getDatabasePlatform() instanceof SqlitePlatform;
+		$pendingColumns = [];
+
+		foreach ($tables as $tableName => $columns) {
+			if (!$schema->hasTable($tableName)) {
+				continue;
+			}
+
+			$table = $schema->getTable($tableName);
+			foreach ($columns as $columnName) {
+				$column = $table->getColumn($columnName);
+				$isAutoIncrement = $column->getAutoincrement();
+				$isAutoIncrementOnSqlite = $isSqlite && $isAutoIncrement;
+				if ($column->getType()->getName() !== Type::BIGINT && !$isAutoIncrementOnSqlite) {
+					$pendingColumns[] = $tableName . '.' . $columnName;
+				}
+			}
+		}
+
+		return $pendingColumns;
+	}
+
+	protected function isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed(): bool {
+		$objectStore = $this->config->getSystemValue('objectstore', null);
+		$objectStoreMultibucket = $this->config->getSystemValue('objectstore_multibucket', null);
+
+		if (!isset($objectStoreMultibucket) && !isset($objectStore)) {
+			return true;
+		}
+
+		if (isset($objectStoreMultibucket['class']) && $objectStoreMultibucket['class'] !== 'OC\\Files\\ObjectStore\\S3') {
+			return true;
+		}
+
+		if (isset($objectStore['class']) && $objectStore['class'] !== 'OC\\Files\\ObjectStore\\S3') {
+			return true;
+		}
+
+		$tempPath = sys_get_temp_dir();
+		if (!is_dir($tempPath)) {
+			$this->logger->error('Error while checking the temporary PHP path - it was not properly set to a directory. value: ' . $tempPath);
+			return false;
+		}
+		$freeSpaceInTemp = disk_free_space($tempPath);
+		if ($freeSpaceInTemp === false) {
+			$this->logger->error('Error while checking the available disk space of temporary PHP path - no free disk space returned. temporary path: ' . $tempPath);
+			return false;
+		}
+
+		$freeSpaceInTempInGB = $freeSpaceInTemp / 1024 / 1024 / 1024;
+		if ($freeSpaceInTempInGB > 50) {
+			return true;
+		}
+
+		$this->logger->warning('Checking the available space in the temporary path resulted in ' . round($freeSpaceInTempInGB, 1) . ' GB instead of the recommended 50GB. Path: ' . $tempPath);
+		return false;
+	}
+
+	/**
 	 * @return DataResponse
 	 */
 	public function check() {
@@ -593,7 +673,6 @@ Raw output
 				'isGetenvServerWorking' => !empty(getenv('PATH')),
 				'isReadOnlyConfig' => $this->isReadOnlyConfig(),
 				'hasValidTransactionIsolationLevel' => $this->hasValidTransactionIsolationLevel(),
-				'outdatedCaches' => $this->getOutdatedCaches(),
 				'hasFileinfoInstalled' => $this->hasFileinfoInstalled(),
 				'hasWorkingFileLocking' => $this->hasWorkingFileLocking(),
 				'suggestedOverwriteCliURL' => $this->getSuggestedOverwriteCliURL(),
@@ -619,10 +698,14 @@ Raw output
 				'missingIndexes' => $this->hasMissingIndexes(),
 				'isSqliteUsed' => $this->isSqliteUsed(),
 				'databaseConversionDocumentation' => $this->urlGenerator->linkToDocs('admin-db-conversion'),
-				'isPhpMailerUsed' => $this->isPhpMailerUsed(),
+				'isPHPMailerUsed' => $this->isPHPMailerUsed(),
 				'mailSettingsDocumentation' => $this->urlGenerator->getAbsoluteURL('index.php/settings/admin'),
 				'isMemoryLimitSufficient' => $this->memoryInfo->isMemoryLimitSufficient(),
 				'appDirsWithDifferentOwner' => $this->getAppDirsWithDifferentOwner(),
+				'recommendedPHPModules' => $this->hasRecommendedPHPModules(),
+				'pendingBigIntConversionColumns' => $this->hasBigIntConversionPendingColumns(),
+				'isMysqlUsedWithoutUTF8MB4' => $this->isMysqlUsedWithoutUTF8MB4(),
+				'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed' => $this->isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed(),
 			]
 		);
 	}

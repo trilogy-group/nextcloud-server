@@ -27,14 +27,12 @@ OCP\User::checkLoggedIn();
 $config = \OC::$server->getConfig();
 $userSession = \OC::$server->getUserSession();
 
-$showgridview = $config->getUserValue($userSession->getUser()->getUID(), 'files', 'show_grid', true);
+$showgridview = $config->getUserValue($userSession->getUser()->getUID(), 'files', 'show_grid', false);
 $isIE = \OCP\Util::isIE();
 
 $tmpl = new OCP\Template('files_trashbin', 'index', '');
 
 // gridview not available for ie
 $tmpl->assign('showgridview', $showgridview && !$isIE);
-OCP\Util::addStyle('files_trashbin', 'trash');
-OCP\Util::addScript('files_trashbin', 'app');
-OCP\Util::addScript('files_trashbin', 'filelist');
+OCP\Util::addScript('files_trashbin', 'files_trashbin');
 $tmpl->printPage();

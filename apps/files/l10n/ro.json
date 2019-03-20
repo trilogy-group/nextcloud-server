@@ -103,18 +103,12 @@
     "A file or folder has been <strong>deleted</strong>" : "Un fișier sau director a fost <strong>șters</strong>",
     "A file or folder has been <strong>restored</strong>" : "Un fișier sau dosar a fost <strong>restaurat</strong>",
     "Upload (max. %s)" : "Încarcă (max. %s)",
-    "File handling" : "Manipulare fișiere",
-    "Maximum upload size" : "Dimensiune maximă admisă la încărcare",
-    "max. possible: " : "max. posibil:",
-    "Save" : "Salvează",
-    "With PHP-FPM it might take 5 minutes for changes to be applied." : "Cu PHP-FPM poate dura 5 minute pentru a aplica schimbările..",
-    "Missing permissions to edit from here." : "Nu ai permisiuni pentru a edita aici.",
+    "%s of %s used" : "%s din %s folosiți",
     "%s used" : "%s folosiți",
     "Settings" : "Setări",
     "Show hidden files" : "Arată fișierele ascunse",
     "WebDAV" : "WebDAV",
     "Use this address to <a href=\"%s\" target=\"_blank\" rel=\"noreferrer noopener\">access your Files via WebDAV</a>" : "Folosește această adresă <a href=\"%s\" target=\"_blank\" rel=\"noreferrer noopener\">pentru a accesa Fișierele prin WebDAV</a>",
-    "Cancel upload" : "Anulează încărcarea",
     "No files in here" : "Niciun fișier aici",
     "Upload some content or sync with your devices!" : "Încarcă ceva conținut sau sincronizează cu dispozitivele tale!",
     "No entries found in this folder" : "Niciun element găsit în acest director",
@@ -131,6 +125,12 @@
     "Text file" : "Fișier text",
     "New text file.txt" : "New text file.txt",
     "Target folder" : "Directorul destinație",
-    "%s of %s used" : "%s din %s folosiți"
+    "File handling" : "Manipulare fișiere",
+    "Maximum upload size" : "Dimensiune maximă admisă la încărcare",
+    "max. possible: " : "max. posibil:",
+    "Save" : "Salvează",
+    "With PHP-FPM it might take 5 minutes for changes to be applied." : "Cu PHP-FPM poate dura 5 minute pentru a aplica schimbările..",
+    "Missing permissions to edit from here." : "Nu ai permisiuni pentru a edita aici.",
+    "Cancel upload" : "Anulează încărcarea"
 },"pluralForm" :"nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?2:1));"
 }

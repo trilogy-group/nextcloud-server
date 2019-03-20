@@ -106,7 +106,7 @@ class OC_App {
 	 * if $types is set to non-empty array, only apps of those types will be loaded
 	 */
 	public static function loadApps(array $types = []): bool {
-		if (\OC::$server->getSystemConfig()->getValue('maintenance', false)) {
+		if ((bool) \OC::$server->getSystemConfig()->getValue('maintenance', false)) {
 			return false;
 		}
 		// Load the enabled apps here
@@ -826,7 +826,7 @@ class OC_App {
 	 *
 	 * @return boolean true if compatible, otherwise false
 	 */
-	public static function isAppCompatible(string $ocVersion, array $appInfo): bool {
+	public static function isAppCompatible(string $ocVersion, array $appInfo, bool $ignoreMax = false): bool {
 		$requireMin = '';
 		$requireMax = '';
 		if (isset($appInfo['dependencies']['nextcloud']['@attributes']['min-version'])) {
@@ -854,7 +854,7 @@ class OC_App {
 			return false;
 		}
 
-		if (!empty($requireMax)
+		if (!$ignoreMax && !empty($requireMax)
 			&& version_compare(self::adjustVersionParts($ocVersion, $requireMax), $requireMax, '>')
 		) {
 			return false;
@@ -1090,9 +1090,9 @@ class OC_App {
 	 * @param array $info
 	 * @throws \Exception
 	 */
-	public static function checkAppDependencies(\OCP\IConfig $config, \OCP\IL10N $l, array $info) {
+	public static function checkAppDependencies(\OCP\IConfig $config, \OCP\IL10N $l, array $info, bool $ignoreMax) {
 		$dependencyAnalyzer = new DependencyAnalyzer(new Platform($config), $l);
-		$missing = $dependencyAnalyzer->analyze($info);
+		$missing = $dependencyAnalyzer->analyze($info, $ignoreMax);
 		if (!empty($missing)) {
 			$missingMsg = implode(PHP_EOL, $missing);
 			throw new \Exception(

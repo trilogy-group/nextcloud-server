@@ -808,6 +808,10 @@ class ShareAPIController extends OCSController {
 			throw new OCSNotFoundException($this->l->t('Wrong share ID, share doesn\'t exist'));
 		}
 
+		if ($share->getShareOwner() !== $this->currentUser && $share->getSharedBy() !== $this->currentUser) {
+			throw new OCSForbiddenException('You are not allowed to edit incoming shares');
+		}
+
 		if ($permissions === null &&
 			$password === null &&
 			$sendPasswordByTalk === null &&
@@ -951,7 +955,7 @@ class ShareAPIController extends OCSController {
 		}
 
 		if ($permissions !== null && $share->getShareOwner() !== $this->currentUser) {
-			/* Check if this is an incomming share */
+			/* Check if this is an incoming share */
 			$incomingShares = $this->shareManager->getSharedWith($this->currentUser, Share::SHARE_TYPE_USER, $share->getNode(), -1, 0);
 			$incomingShares = array_merge($incomingShares, $this->shareManager->getSharedWith($this->currentUser, Share::SHARE_TYPE_GROUP, $share->getNode(), -1, 0));
 			$incomingShares = array_merge($incomingShares, $this->shareManager->getSharedWith($this->currentUser, Share::SHARE_TYPE_ROOM, $share->getNode(), -1, 0));

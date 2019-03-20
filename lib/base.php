@@ -285,7 +285,7 @@ class OC {
 
 	public static function checkMaintenanceMode() {
 		// Allow ajax update script to execute without being stopped
-		if (\OC::$server->getSystemConfig()->getValue('maintenance', false) && OC::$SUBURI != '/core/ajax/update.php') {
+		if (((bool) \OC::$server->getSystemConfig()->getValue('maintenance', false)) && OC::$SUBURI != '/core/ajax/update.php') {
 			// send http status 503
 			http_response_code(503);
 			header('Retry-After: 120');
@@ -454,20 +454,6 @@ class OC {
 	 */
 	private static function getSessionLifeTime() {
 		return \OC::$server->getConfig()->getSystemValue('session_lifetime', 60 * 60 * 24);
-	}
-
-	public static function loadAppClassPaths() {
-		foreach (OC_App::getEnabledApps() as $app) {
-			$appPath = OC_App::getAppPath($app);
-			if ($appPath === false) {
-				continue;
-			}
-
-			$file = $appPath . '/appinfo/classpath.php';
-			if (file_exists($file)) {
-				require_once $file;
-			}
-		}
 	}
 
 	/**
@@ -730,6 +716,7 @@ class OC {
 		self::registerEncryptionWrapper();
 		self::registerEncryptionHooks();
 		self::registerAccountHooks();
+		self::registerResourceCollectionHooks();
 
 		// Make sure that the application class is not loaded before the database is setup
 		if ($systemConfig->getValue("installed", false)) {
@@ -861,6 +848,10 @@ class OC {
 		\OCP\Util::connectHook('OC_User', 'changeUser', $hookHandler, 'changeUserHook');
 	}
 
+	private static function registerResourceCollectionHooks() {
+		\OC\Collaboration\Resources\Listener::register(\OC::$server->getEventDispatcher());
+	}
+
 	/**
 	 * register hooks for the filesystem
 	 */
@@ -905,9 +896,6 @@ class OC {
 
 		\OC::$server->getEventLogger()->start('handle_request', 'Handle request');
 		$systemConfig = \OC::$server->getSystemConfig();
-		// load all the classpaths from the enabled apps so they are available
-		// in the routing files of each app
-		OC::loadAppClassPaths();
 
 		// Check if Nextcloud is installed or in maintenance (update) mode
 		if (!$systemConfig->getValue('installed', false)) {
@@ -938,7 +926,7 @@ class OC {
 				if (function_exists('opcache_reset')) {
 					opcache_reset();
 				}
-				if (!$systemConfig->getValue('maintenance', false)) {
+				if (!((bool) $systemConfig->getValue('maintenance', false))) {
 					self::printUpgradePage($systemConfig);
 					exit();
 				}
@@ -966,7 +954,7 @@ class OC {
 
 		// Load minimum set of apps
 		if (!\OCP\Util::needUpgrade()
-			&& !$systemConfig->getValue('maintenance', false)) {
+			&& !((bool) $systemConfig->getValue('maintenance', false))) {
 			// For logged-in users: Load everything
 			if(\OC::$server->getUserSession()->isLoggedIn()) {
 				OC_App::loadApps();
@@ -979,7 +967,7 @@ class OC {
 
 		if (!self::$CLI) {
 			try {
-				if (!$systemConfig->getValue('maintenance', false) && !\OCP\Util::needUpgrade()) {
+				if (!((bool) $systemConfig->getValue('maintenance', false)) && !\OCP\Util::needUpgrade()) {
 					OC_App::loadApps(array('filesystem', 'logging'));
 					OC_App::loadApps();
 				}

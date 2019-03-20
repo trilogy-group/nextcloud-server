@@ -3,6 +3,7 @@
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
  * @author Andreas Fischer <bantu@owncloud.com>
+ * @author Ari Selseng <ari@selseng.net>
  * @author Artem Kochnev <MrJeos@gmail.com>
  * @author Björn Schießle <bjoern@schiessle.org>
  * @author Florin Peter <github@florin-peter.de>
@@ -40,10 +41,13 @@ namespace OC\Files\Cache;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use Doctrine\DBAL\Driver\Statement;
+use OCP\Files\Cache\CacheInsertEvent;
+use OCP\Files\Cache\CacheUpdateEvent;
 use OCP\Files\Cache\ICache;
 use OCP\Files\Cache\ICacheEntry;
 use \OCP\Files\IMimeTypeLoader;
 use OCP\Files\Search\ISearchQuery;
+use OCP\Files\Storage\IStorage;
 use OCP\IDBConnection;
 
 /**
@@ -71,6 +75,8 @@ class Cache implements ICache {
 	 */
 	protected $storageId;
 
+	private $storage;
+
 	/**
 	 * @var Storage $storageCache
 	 */
@@ -84,18 +90,17 @@ class Cache implements ICache {
 	 */
 	protected $connection;
 
+	protected $eventDispatcher;
+
 	/** @var QuerySearchHelper */
 	protected $querySearchHelper;
 
 	/**
-	 * @param \OC\Files\Storage\Storage|string $storage
+	 * @param IStorage $storage
 	 */
-	public function __construct($storage) {
-		if ($storage instanceof \OC\Files\Storage\Storage) {
-			$this->storageId = $storage->getId();
-		} else {
-			$this->storageId = $storage;
-		}
+	public function __construct(IStorage $storage) {
+		$this->storageId = $storage->getId();
+		$this->storage = $storage;
 		if (strlen($this->storageId) > 64) {
 			$this->storageId = md5($this->storageId);
 		}
@@ -103,6 +108,7 @@ class Cache implements ICache {
 		$this->storageCache = new Storage($storage);
 		$this->mimetypeLoader = \OC::$server->getMimeTypeLoader();
 		$this->connection = \OC::$server->getDatabaseConnection();
+		$this->eventDispatcher = \OC::$server->getEventDispatcher();
 		$this->querySearchHelper = new QuerySearchHelper($this->mimetypeLoader);
 	}
 
@@ -149,6 +155,8 @@ class Cache implements ICache {
 			if (isset($this->partial[$file])) {
 				$data = $this->partial[$file];
 			}
+			return $data;
+		} else if (!$data) {
 			return $data;
 		} else {
 			return self::cacheEntryFromData($data, $this->mimetypeLoader);
@@ -224,7 +232,7 @@ class Cache implements ICache {
 	 */
 	public function put($file, array $data) {
 		if (($id = $this->getId($file)) > -1) {
-			$this->update($id, $data);
+			$this->update($id, $data, $file);
 			return $id;
 		} else {
 			return $this->insert($file, $data);
@@ -281,9 +289,11 @@ class Cache implements ICache {
 			}
 
 			if ($builder->execute()) {
-				return (int)$this->connection->lastInsertId('*PREFIX*filecache');
+				$fileId = (int)$this->connection->lastInsertId('*PREFIX*filecache');
+				$this->eventDispatcher->dispatch(CacheInsertEvent::class, new CacheInsertEvent($this->storage, $file, $fileId));
+				return $fileId;
 			}
-		} catch(UniqueConstraintViolationException $e) {
+		} catch (UniqueConstraintViolationException $e) {
 			// entry exists already
 		}
 
@@ -329,6 +339,11 @@ class Cache implements ICache {
 			') AND `fileid` = ? ';
 		$this->connection->executeQuery($sql, $params);
 
+		$path = $this->getPathById($id);
+		// path can still be null if the file doesn't exist
+		if ($path !== null) {
+			$this->eventDispatcher->dispatch(CacheUpdateEvent::class, new CacheUpdateEvent($this->storage, $path, $id));
+		}
 	}
 
 	/**
@@ -760,15 +775,38 @@ class Cache implements ICache {
 	 * @param string|boolean $path
 	 * @param array $data (optional) meta data of the folder
 	 */
-	public function correctFolderSize($path, $data = null) {
+	public function correctFolderSize($path, $data = null, $isBackgroundScan = false) {
 		$this->calculateFolderSize($path, $data);
 		if ($path !== '') {
 			$parent = dirname($path);
 			if ($parent === '.' or $parent === '/') {
 				$parent = '';
 			}
-			$this->correctFolderSize($parent);
+			if ($isBackgroundScan) {
+				$parentData = $this->get($parent);
+				if ($parentData['size'] !== -1 && $this->getIncompleteChildrenCount($parentData['fileid']) === 0) {
+					$this->correctFolderSize($parent, $parentData, $isBackgroundScan);
+				}
+			} else {
+				$this->correctFolderSize($parent);
+			}
 		}
+	}
+
+	/**
+	 * get the incomplete count that shares parent $folder
+	 *
+	 * @param int $fileId the file id of the folder
+	 * @return int
+	 */
+	public function getIncompleteChildrenCount($fileId) {
+		if ($fileId > -1) {
+			$sql = 'SELECT count(*)
+					FROM `*PREFIX*filecache` WHERE `parent` = ? AND size = -1';
+			$result = $this->connection->executeQuery($sql, [$fileId]);
+			return (int)$result->fetchColumn();
+		}
+		return -1;
 	}
 
 	/**

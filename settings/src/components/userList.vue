@@ -51,7 +51,7 @@
 				<input id="newusername" type="text" required v-model="newUser.id"
 					   :placeholder="t('settings', 'Username')" name="username"
 					   autocomplete="off" autocapitalize="none" autocorrect="off"
-					   pattern="[a-zA-Z0-9 _\.@\-']+">
+					   ref="newusername" pattern="[a-zA-Z0-9 _\.@\-']+">
 			</div>
 			<div class="displayName">
 				<input id="newdisplayname" type="text" v-model="newUser.displayName"
@@ -60,7 +60,7 @@
 			</div>
 			<div class="password">
 				<input id="newuserpassword" type="password" v-model="newUser.password"
-					   :required="newUser.mailAddress===''"
+					   :required="newUser.mailAddress===''" ref="newuserpassword"
 					   :placeholder="t('settings', 'Password')" name="password"
 					   autocomplete="new-password" autocapitalize="none" autocorrect="off"
 					   :minlength="minPasswordLength">
@@ -80,7 +80,7 @@
 						 tag-placeholder="create" :placeholder="t('settings', 'Add user in group')"
 						 label="name" track-by="id" class="multiselect-vue"
 						 :multiple="true" :taggable="true" :close-on-select="false"
-						 @tag="createGroup">
+						 :tag-width="60" @tag="createGroup">
 							 <!-- If user is not admin, he is a subadmin.
 							 	  Subadmins can't create users outside their groups
 								  Therefore, empty select is forbidden -->
@@ -91,7 +91,7 @@
 				<multiselect :options="subAdminsGroups" v-model="newUser.subAdminsGroups"
 							 :placeholder="t('settings', 'Set user as admin for')"
 							 label="name" track-by="id" class="multiselect-vue"
-							 :multiple="true" :close-on-select="false">
+							 :multiple="true" :close-on-select="false" :tag-width="60">
 					<span slot="noResult">{{t('settings', 'No results')}}</span>
 			</multiselect>
 			</div>
@@ -137,7 +137,7 @@
 
 <script>
 import userRow from './userList/userRow';
-import Multiselect from 'vue-multiselect';
+import { Multiselect } from 'nextcloud-vue'
 import InfiniteLoading from 'vue-infinite-loading';
 import Vue from 'vue';
 
@@ -189,7 +189,7 @@ export default {
 		 * In case the user directly loaded the user list within a group
 		 * the watch won't be triggered. We need to initialize it.
 		 */
-		this.setNewUserDefaultGroup(this.$route.params.selectedGroup);
+		this.setNewUserDefaultGroup(this.selectedGroup);
 
 		/** 
 		 * Register search
@@ -206,7 +206,7 @@ export default {
 				if (disabledUsers.length===0 && this.$refs.infiniteLoading && this.$refs.infiniteLoading.isComplete) {
 					// disabled group is empty, redirection to all users
 					this.$router.push({name: 'users'});
-					this.$refs.infiniteLoading.$emit('$InfiniteLoading:reset');
+					this.$refs.infiniteLoading.stateChanger.reset()
 				}
 				return disabledUsers;
 			}
@@ -253,6 +253,9 @@ export default {
 		usersLimit() {
 			return this.$store.getters.getUsersLimit;
 		},
+		usersCount() {
+			return this.users.length
+		},
 
 		/* LANGUAGES */
 		languages() {
@@ -272,8 +275,22 @@ export default {
 		// watch url change and group select
 		selectedGroup: function (val, old) {
 			this.$store.commit('resetUsers');
-			this.$refs.infiniteLoading.$emit('$InfiniteLoading:reset');
+			this.$refs.infiniteLoading.stateChanger.reset()
 			this.setNewUserDefaultGroup(val);
+		},
+
+		// make sure the infiniteLoading state is changed if we manually
+		// add/remove data from the store
+		usersCount: function(val, old) {
+			// deleting the last user, reset the list 
+			if (val === 0 && old === 1) {
+				this.$refs.infiniteLoading.stateChanger.reset()
+			// adding the first user, warn the infiniteLoader that 
+			// the list is not empty anymore (we don't fetch the newly
+			// added user as we already have all the info we need)
+			} else if (val === 1 && old === 0) {
+				this.$refs.infiniteLoading.stateChanger.loaded()
+			}
 		}
 	},
 	methods: {
@@ -313,7 +330,7 @@ export default {
 		search(query) {
 			this.searchQuery = query;
 			this.$store.commit('resetUsers');
-			this.$refs.infiniteLoading.$emit('$InfiniteLoading:reset');
+			this.$refs.infiniteLoading.stateChanger.reset()
 		},
 		resetSearch() {
 			this.search('');
@@ -322,6 +339,8 @@ export default {
 		resetForm() {
 			// revert form to original state
 			Object.assign(this.newUser, this.$options.data.call(this).newUser);
+			// reset group
+			this.setNewUserDefaultGroup(this.selectedGroup);
 			this.loading.all = false;
 		},
 		createUser() {
@@ -335,8 +354,23 @@ export default {
 				subadmin: this.newUser.subAdminsGroups.map(group => group.id),
 				quota: this.newUser.quota.id,
 				language: this.newUser.language.code,
-			}).then(() => this.resetForm())
-			.catch(() => this.loading.all = false);
+			})
+			.then(() => {
+				this.resetForm()
+			})
+			.catch((error) => {
+				this.loading.all = false;
+				if (error.response && error.response.data && error.response.data.ocs && error.response.data.ocs.meta) {
+					const statuscode = error.response.data.ocs.meta.statuscode
+					if (statuscode === 102) {
+						// wrong username
+						this.$refs.newusername.focus();	
+					} else if (statuscode === 107) {
+						// wrong password
+						this.$refs.newuserpassword.focus();	
+					}
+				}
+			});
 		},
 		setNewUserDefaultGroup(value) {
 			if (value && value.length > 0) {

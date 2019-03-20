@@ -225,8 +225,8 @@ $CONFIG = array(
 'allow_user_to_change_display_name' => true,
 
 /**
- * Lifetime of the remember login cookie, which is set when the user clicks
- * the ``remember`` checkbox on the login screen.
+ * Lifetime of the remember login cookie. This should be larger than the
+ * session_lifetime. If it is set to 0 remember me is disabled.
  *
  * Defaults to ``60*60*24*15`` seconds (15 days)
  */
@@ -276,18 +276,6 @@ $CONFIG = array(
  * Defaults to ``core/skeleton`` in the Nextcloud directory.
  */
 'skeletondirectory' => '/path/to/nextcloud/core/skeleton',
-
-/**
- * The ``user_backends`` app (which needs to be enabled first) allows you to
- * configure alternate authentication backends. Supported backends are:
- * IMAP (OC_User_IMAP), SMB (OC_User_SMB), and FTP (OC_User_FTP).
- */
-'user_backends' => array(
-	array(
-		'class' => 'OC_User_IMAP',
-		'arguments' => array('{imap.gmail.com:993/imap/ssl}INBOX')
-	)
-),
 
 /**
  * If your user backend does not allow password resets (e.g. when it's a
@@ -420,6 +408,26 @@ $CONFIG = array(
  * allows to only send plain text emails.
  */
 'mail_send_plaintext_only' => false,
+
+/**
+ * This depends on ``mail_smtpmode``. Array of additional streams options that
+ * will be passed to underlying Swift mailer implementation.
+ * Defaults to an empty array.
+ */
+'mail_smtpstreamoptions' => array(),
+
+/**
+ * Which mode is used for sendmail/qmail: ``smtp`` or ``pipe``.
+ *
+ * For ``smtp`` the sendmail binary is started with the parameter ``-bs``:
+ *   - Use the SMTP protocol on standard input and output.
+ *
+ * For ``pipe`` the binary is started with the parameters ``-t``:
+ *   - Read message from STDIN and extract recipients.
+ *
+ * Defaults to ``smtp``
+ */
+'mail_sendmailmode' => 'smtp',
 
 /**
  * Proxy Configurations
@@ -655,6 +663,26 @@ $CONFIG = array(
  * Defaults to ``true``
  */
 'has_internet_connection' => true,
+
+/**
+ * Which domains to request to determine the availability of an Internet
+ * connection. If none of these hosts are reachable, the administration panel
+ * will show a warning. Set to an empty list to not do any such checks (warning
+ * will still be shown).
+ *
+ * Defaults to the following domains:
+ *
+ *  - www.nextcloud.com
+ *  - www.startpage.com
+ *  - www.eff.org
+ *  - www.edri.org
+ */
+'connectivity_check_domains' => array(
+	'www.nextcloud.com',
+	'www.startpage.com',
+	'www.eff.org',
+	'www.edri.org'
+),
 
 /**
  * Allows Nextcloud to verify a working .well-known URL redirects. This is done

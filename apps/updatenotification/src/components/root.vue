@@ -4,7 +4,7 @@
 			<template v-if="isNewVersionAvailable">
 				<p v-if="versionIsEol">
 					<span class="warning">
-						<span class="icon icon-error"></span>
+						<span class="icon icon-error-white"></span>
 						{{ t('updatenotification', 'The version you are running is not maintained anymore. Please make sure to update to a supported version as soon as possible.') }}
 					</span>
 				</p>
@@ -37,15 +37,15 @@
 					</ul>
 				</template>
 
-				<p>
-					<a v-if="updaterEnabled" href="#" class="button" @click="clickUpdaterButton">{{ t('updatenotification', 'Open updater') }}</a>
+				<div>
+					<a v-if="updaterEnabled" href="#" class="button primary" @click="clickUpdaterButton">{{ t('updatenotification', 'Open updater') }}</a>
 					<a v-if="downloadLink" :href="downloadLink" class="button" :class="{ hidden: !updaterEnabled }">{{ t('updatenotification', 'Download now') }}</a>
-				</p>
-				<div class="whatsNew" v-if="whatsNew">
-					<div class="toggleWhatsNew">
-						<span v-click-outside="hideMenu" @click="toggleMenu">{{ t('updatenotification', 'What\'s new?') }}</span>
-						<div class="popovermenu" :class="{ 'menu-center': true, open: openedWhatsNew }">
-							<popover-menu :menu="whatsNew" />
+					<div class="whatsNew" v-if="whatsNew">
+						<div class="toggleWhatsNew">
+							<a class="button" v-click-outside="hideMenu" @click="toggleMenu">{{ t('updatenotification', 'What\'s new?') }}</a>
+							<div class="popovermenu" :class="{ 'menu-center': true, open: openedWhatsNew }">
+								<popover-menu :menu="whatsNew" />
+							</div>
 						</div>
 					</div>
 				</div>
@@ -53,35 +53,37 @@
 			<template v-else-if="!isUpdateChecked">{{ t('updatenotification', 'The update check is not yet finished. Please refresh the page.') }}</template>
 			<template v-else>
 				{{ t('updatenotification', 'Your version is up to date.') }}
-				<span class="icon-info svg" :title="lastCheckedOnString"></span>
+				<span class="icon-info svg" v-tooltip.auto="lastCheckedOnString"></span>
 			</template>
 
 			<template v-if="!isDefaultUpdateServerURL">
-				<p>
+				<p class="topMargin">
 					<em>{{ t('updatenotification', 'A non-default update server is in use to be checked for updates:') }} <code>{{updateServerURL}}</code></em>
 				</p>
 			</template>
 		</div>
 
+		<h3 class="update-channel-selector">
+			{{ t('updatenotification', 'Update channel:') }}
+			<div class="update-menu">
+				<span class="icon-update-menu" @click="toggleUpdateChannelMenu">
+					{{ localizedChannelName }}
+					<span class="icon-triangle-s"></span>
+				</span>
+				<div class="popovermenu menu menu-center" v-bind:class="{ 'show-menu': openedUpdateChannelMenu}">
+					<popover-menu :menu="channelList" />
+				</div>
+			</div>
+		</h3>
+		<span id="channel_save_msg" class="msg"></span><br />
 		<p>
-			<label for="release-channel">{{ t('updatenotification', 'Update channel:') }}</label>
-			<select id="release-channel" v-model="currentChannel" @change="changeReleaseChannel">
-				<option v-for="channel in channels" :value="channel">{{channel}}</option>
-			</select>
-			<span id="channel_save_msg" class="msg"></span><br />
-			<em>{{ t('updatenotification', 'You can always update to a newer version / experimental channel. But you can never downgrade to a more stable channel.') }}</em><br />
+			<em>{{ t('updatenotification', 'You can always update to a newer version. But you can never downgrade to a more stable version.') }}</em><br />
 			<em>{{ t('updatenotification', 'Note that after a new release it can take some time before it shows up here. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found.') }}</em>
-		</p>
-
-		<p class="channel-description">
-			<span v-html="productionInfoString"></span><br>
-			<span v-html="stableInfoString"></span><br>
-			<span v-html="betaInfoString"></span>
 		</p>
 
 		<p id="oca_updatenotification_groups">
 			{{ t('updatenotification', 'Notify members of the following groups about available updates:') }}
-			<v-select multiple :value="notifyGroups" :options="availableGroups"></v-select><br />
+			<multiselect v-model="notifyGroups" :options="availableGroups" :multiple="true" label="label" track-by="value" :tag-width="75" /><br />
 			<em v-if="currentChannel === 'daily' || currentChannel === 'git'">{{ t('updatenotification', 'Only notification for app updates are available.') }}</em>
 			<em v-if="currentChannel === 'daily'">{{ t('updatenotification', 'The selected update channel makes dedicated notifications for the server obsolete.') }}</em>
 			<em v-if="currentChannel === 'git'">{{ t('updatenotification', 'The selected update channel does not support updates of the server.') }}</em>
@@ -90,18 +92,19 @@
 </template>
 
 <script>
-	import vSelect from 'vue-select';
-	import popoverMenu from './popoverMenu';
+	import { PopoverMenu, Multiselect } from 'nextcloud-vue';
+	import { VTooltip } from 'v-tooltip';
 	import ClickOutside from 'vue-click-outside';
 
 	export default {
 		name: 'root',
 		components: {
-			vSelect,
-			popoverMenu,
+			Multiselect,
+			PopoverMenu,
 		},
 		directives: {
-			ClickOutside
+			ClickOutside,
+			tooltip: VTooltip
 		},
 		data: function () {
 			return {
@@ -130,11 +133,11 @@
 				hideMissingUpdates: false,
 				hideAvailableUpdates: true,
 				openedWhatsNew: false,
+				openedUpdateChannelMenu: false,
 			};
 		},
 
 		_$el: null,
-		_$releaseChannel: null,
 		_$notifyGroups: null,
 
 		watch: {
@@ -210,19 +213,7 @@
 					this.missingAppUpdates.length);
 			},
 
-			productionInfoString: function() {
-				return t('updatenotification', '<strong>production</strong> will always provide the latest patch level, but not update to the next major release immediately. That update usually happens with the second minor release (x.0.2).');
-			},
-
-			stableInfoString: function() {
-				return t('updatenotification', '<strong>stable</strong> is the most recent stable version. It is suited for regular use and will always update to the latest major version.');
-			},
-
-			betaInfoString: function() {
-				return t('updatenotification', '<strong>beta</strong> is a pre-release version only for testing new features, not for production environments.');
-			},
-
-			whatsNew: function () {
+			whatsNew: function() {
 				if(this.whatsNewData.length === 0) {
 					return null;
 				}
@@ -240,6 +231,65 @@
 					});
 				}
 				return whatsNew;
+			},
+
+			channelList: function() {
+				let channelList = [];
+
+				channelList.push({
+					text: t('updatenotificaiton', 'Stable'),
+					longtext: t('updatenotification', 'The most recent stable version. It is suited for regular use and will always update to the latest major version.'),
+					icon: 'icon-checkmark',
+					active: this.currentChannel === 'stable',
+					action: this.changeReleaseChannelToStable
+				});
+
+				channelList.push({
+					text: t('updatenotificaiton', 'Production'),
+					longtext: t('updatenotification', 'Will always provide the latest patch level, but not update to the next major release immediately. That update usually happens with the second minor release (x.0.2) and only if the instance is already on the latest minor version.'),
+					icon: 'icon-star',
+					active: this.currentChannel === 'production',
+					action: this.changeReleaseChannelToProduction
+				});
+
+				channelList.push({
+					text: t('updatenotificaiton', 'Beta'),
+					longtext: t('updatenotification', 'A pre-release version only for testing new features, not for production environments.'),
+					icon: 'icon-category-customization',
+					active: this.currentChannel === 'beta',
+					action: this.changeReleaseChannelToBeta
+				});
+
+				if (this.isNonDefaultChannel) {
+					channelList.push({
+						text: this.currentChannel,
+						icon: 'icon-rename',
+						active: true
+					});
+				}
+
+				return channelList;
+			},
+
+			isNonDefaultChannel: function() {
+				return this.currentChannel !== 'production' && this.currentChannel !== 'stable' && this.currentChannel !== 'beta';
+			},
+
+			localizedChannelName: function() {
+				switch (this.currentChannel) {
+					case 'production':
+						return t('updatenotificaiton', 'Production');
+						break;
+					case 'stable':
+						return t('updatenotificaiton', 'Stable');
+						break;
+					case 'beta':
+						return t('updatenotificaiton', 'Beta');
+						break;
+					default:
+						return this.currentChannel;
+						break;
+				}
 			}
 		},
 
@@ -250,38 +300,34 @@
 			clickUpdaterButton: function() {
 				$.ajax({
 					url: OC.generateUrl('/apps/updatenotification/credentials')
-				}).success(function(data) {
-					$.ajax({
-						url: OC.getRootPath()+'/updater/',
-						headers: {
-							'X-Updater-Auth': data
-						},
-						method: 'POST',
-						success: function(data){
-							if(data !== 'false') {
-								var body = $('body');
-								$('head').remove();
-								body.html(data);
+				}).success(function(token) {
+					// create a form to send a proper post request to the updater
+					var form = document.createElement('form');
+					form.setAttribute('method', 'post');
+					form.setAttribute('action', OC.getRootPath() + '/updater/');
 
-								// Eval the script elements in the response
-								var dom = $(data);
-								dom.filter('script').each(function() {
-									eval(this.text || this.textContent || this.innerHTML || '');
-								});
+					var hiddenField = document.createElement('input');
+					hiddenField.setAttribute('type', 'hidden');
+					hiddenField.setAttribute('name', 'updater-secret-input');
+					hiddenField.setAttribute('value', token);
 
-								body.removeAttr('id');
-								body.attr('id', 'body-settings');
-							}
-						},
-						error: function() {
-							OC.Notification.showTemporary(t('updatenotification', 'Could not start updater, please try the manual update'));
-							this.updaterEnabled = false;
-						}.bind(this)
-					});
+					form.appendChild(hiddenField);
+
+					document.body.appendChild(form);
+					form.submit();
 				}.bind(this));
 			},
-			changeReleaseChannel: function() {
-				this.currentChannel = this._$releaseChannel.val();
+			changeReleaseChannelToStable: function() {
+				this.changeReleaseChannel('stable')
+			},
+			changeReleaseChannelToProduction: function() {
+				this.changeReleaseChannel('production')
+			},
+			changeReleaseChannelToBeta: function() {
+				this.changeReleaseChannel('beta')
+			},
+			changeReleaseChannel: function(channel) {
+				this.currentChannel = channel;
 
 				$.ajax({
 					url: OC.generateUrl('/apps/updatenotification/channel'),
@@ -293,6 +339,11 @@
 						OC.msg.finishedAction('#channel_save_msg', data);
 					}
 				});
+
+				this.openedUpdateChannelMenu = false;
+			},
+			toggleUpdateChannelMenu: function() {
+				this.openedUpdateChannelMenu = !this.openedUpdateChannelMenu;
 			},
 			toggleHideMissingUpdates: function() {
 				this.hideMissingUpdates = !this.hideMissingUpdates;
@@ -336,7 +387,6 @@
 		},
 		mounted: function () {
 			this._$el = $(this.$el);
-			this._$releaseChannel = this._$el.find('#release-channel');
 			this._$notifyGroups = this._$el.find('#oca_updatenotification_groups_list');
 			this._$notifyGroups.on('change', function () {
 				this.$emit('input');
@@ -355,10 +405,99 @@
 					this.enableChangeWatcher = true;
 				}.bind(this)
 			});
-		},
-
-		updated: function () {
-			this._$el.find('.icon-info').tooltip({placement: 'right'});
 		}
 	}
 </script>
+
+<style lang="sass" scoped>
+	#updatenotification {
+		margin-top: -25px;
+		margin-bottom: 200px;
+		div.update,
+		p:not(.inlineblock) {
+			margin-bottom: 25px;
+		}
+		h2.inlineblock {
+			margin-top: 25px;
+		}
+		h3 {
+			cursor: pointer;
+			.icon {
+				cursor: pointer;
+			}
+			&:first-of-type {
+				margin-top: 0;
+			}
+			&.update-channel-selector {
+				display: inline-block;
+				cursor: inherit;
+			}
+		}
+		.icon {
+			display: inline-block;
+			margin-bottom: -3px;
+		}
+		.icon-triangle-s, .icon-triangle-n {
+			opacity: 0.5;
+		}
+		.whatsNew {
+			display: inline-block;
+		}
+		.toggleWhatsNew {
+			position: relative;
+		}
+		.popovermenu {
+			p {
+				margin-bottom: 0;
+				width: 100%;
+			}
+			margin-top: 5px;
+			width: 300px;
+		}
+		.applist {
+			margin-bottom: 25px;
+		}
+
+		.update-menu {
+			position: relative;
+			cursor: pointer;
+			margin-left: 3px;
+			display: inline-block;
+			.icon-update-menu {
+				cursor: inherit;
+				.icon-triangle-s {
+					display: inline-block;
+					vertical-align: middle;
+					cursor: inherit;
+					opacity: 1;
+				}
+			}
+			.popovermenu {
+				display: none;
+				top: 28px;
+				&.show-menu {
+					display: block;
+				}
+			}
+		}
+	}
+</style>
+<style lang="sass">
+	/* override needed to make menu wider */
+	#updatenotification .popovermenu {
+		p {
+			margin-top: 5px;
+			width: 100%;
+		}
+		margin-top: 5px;
+		width: 300px;
+	}
+	/* override needed to replace yellow hover state with a dark one */
+	#updatenotification .update-menu .icon-star:hover,
+	#updatenotification .update-menu .icon-star:focus {
+		background-image: var(--icon-star-000);
+	}
+	#updatenotification .topMargin {
+		margin-top: 15px;
+	}
+</style>

@@ -59,6 +59,7 @@ use OCP\Files\InvalidPathException;
 use OCP\Files\Mount\IMountPoint;
 use OCP\Files\NotFoundException;
 use OCP\Files\ReservedWordException;
+use OCP\Files\Storage\IStorage;
 use OCP\ILogger;
 use OCP\IUser;
 use OCP\Lock\ILockingProvider;
@@ -786,7 +787,8 @@ class View {
 
 						if ($internalPath1 === '') {
 							if ($mount1 instanceof MoveableMount) {
-								if ($this->isTargetAllowed($absolutePath2)) {
+								$sourceParentMount = $this->getMount(dirname($path1));
+								if ($sourceParentMount === $mount2 && $this->targetIsNotShared($storage2, $internalPath2)) {
 									/**
 									 * @var \OC\Files\Mount\MountPoint | \OC\Files\Mount\MoveableMount $mount1
 									 */
@@ -1137,7 +1139,13 @@ class View {
 			list($storage, $internalPath) = Filesystem::resolvePath($absolutePath . $postFix);
 			if ($run and $storage) {
 				if (in_array('write', $hooks) || in_array('delete', $hooks)) {
-					$this->changeLock($path, ILockingProvider::LOCK_EXCLUSIVE);
+					try {
+						$this->changeLock($path, ILockingProvider::LOCK_EXCLUSIVE);
+					} catch (LockedException $e) {
+						// release the shared lock we acquired before quiting
+						$this->unlockFile($path, ILockingProvider::LOCK_SHARED);
+						throw $e;
+					}
 				}
 				try {
 					if (!is_null($extraParam)) {
@@ -1157,7 +1165,7 @@ class View {
 				if ($result && in_array('delete', $hooks) and $result) {
 					$this->removeUpdate($storage, $internalPath);
 				}
-				if ($result && in_array('write', $hooks) and $operation !== 'fopen') {
+				if ($result && in_array('write', $hooks,  true) && $operation !== 'fopen' && $operation !== 'touch') {
 					$this->writeUpdate($storage, $internalPath);
 				}
 				if ($result && in_array('touch', $hooks)) {
@@ -1293,7 +1301,7 @@ class View {
 		if ($owner instanceof IUser) {
 			return $owner;
 		} else {
-			return new User($ownerId, null);
+			return new User($ownerId, null, \OC::$server->getEventDispatcher());
 		}
 	}
 
@@ -1368,15 +1376,18 @@ class View {
 			$data = $this->getCacheEntry($storage, $internalPath, $relativePath);
 
 			if (!$data instanceof ICacheEntry) {
-				\OC::$server->getLogger()->debug('No cache entry found for ' . $path . ' (storage: ' . $storage->getId() . ', internalPath: ' . $internalPath . ')');
 				return false;
 			}
 
 			if ($mount instanceof MoveableMount && $internalPath === '') {
 				$data['permissions'] |= \OCP\Constants::PERMISSION_DELETE;
 			}
-
-			$owner = $this->getUserObjectForOwner($storage->getOwner($internalPath));
+			$ownerId = $storage->getOwner($internalPath);
+			$owner = null;
+			if ($ownerId !== null) {
+				// ownerId might be null if files are accessed with an access token without file system access
+				$owner = $this->getUserObjectForOwner($ownerId);
+			}
 			$info = new FileInfo($path, $storage, $internalPath, $data, $mount, $owner);
 
 			if ($data and isset($data['fileid'])) {
@@ -1744,18 +1755,11 @@ class View {
 	 * It is not allowed to move a mount point into a different mount point or
 	 * into an already shared folder
 	 *
-	 * @param string $target path
+	 * @param IStorage $targetStorage
+	 * @param string $targetInternalPath
 	 * @return boolean
 	 */
-	private function isTargetAllowed($target) {
-
-		list($targetStorage, $targetInternalPath) = \OC\Files\Filesystem::resolvePath($target);
-		if (!$targetStorage->instanceOfStorage('\OCP\Files\IHomeStorage')) {
-			\OCP\Util::writeLog('files',
-				'It is not allowed to move one mount point into another one',
-				ILogger::DEBUG);
-			return false;
-		}
+	private function targetIsNotShared(IStorage $targetStorage, string $targetInternalPath) {
 
 		// note: cannot use the view because the target is already locked
 		$fileId = (int)$targetStorage->getCache()->getId($targetInternalPath);

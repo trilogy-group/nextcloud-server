@@ -47,10 +47,11 @@
 		<div class="app-licence" v-if="licence">{{ licence }}</div>
 		<div class="actions">
 			<div class="actions-buttons">
-				<input v-if="app.update" class="update primary" type="button" :value="t('settings', 'Update to {version}', {version: app.update})" :disabled="installing || loading(app.id)"/>
+				<input v-if="app.update" class="update primary" type="button" :value="t('settings', 'Update to {version}', {version: app.update})" v-on:click="update(app.id)" :disabled="installing || loading(app.id)"/>
 				<input v-if="app.canUnInstall" class="uninstall" type="button" :value="t('settings', 'Remove')" v-on:click="remove(app.id)" :disabled="installing || loading(app.id)"/>
 				<input v-if="app.active" class="enable" type="button" :value="t('settings','Disable')" v-on:click="disable(app.id)" :disabled="installing || loading(app.id)" />
-				<input v-if="!app.active" class="enable primary" type="button" :value="enableButtonText" v-on:click="enable(app.id)" v-tooltip.auto="enableButtonTooltip" :disabled="!app.canInstall || installing || loading(app.id)" />
+				<input v-if="!app.active && (app.canInstall || app.isCompatible)" class="enable primary" type="button" :value="enableButtonText" v-on:click="enable(app.id)" v-tooltip.auto="enableButtonTooltip" :disabled="!app.canInstall || installing || loading(app.id)" />
+				<input v-else-if="!app.active" class="enable force" type="button" :value="forceEnableButtonText" v-on:click="forceEnable(app.id)" v-tooltip.auto="forceEnableButtonTooltip" :disabled="installing || loading(app.id)" />
 			</div>
 			<div class="app-groups">
 				<div class="groups-enable" v-if="app.active && canLimitToGroups(app)">
@@ -96,6 +97,9 @@
 
 <script>
 import Multiselect from 'vue-multiselect';
+import marked from 'marked';
+import dompurify from 'dompurify'
+
 import AppScore from './appList/appScore';
 import AppManagement from './appManagement';
 import prefix from './prefixMixin';
@@ -162,8 +166,7 @@ export default {
 				.sort((a, b) => a.name.localeCompare(b.name));
 		},
 		renderMarkdown() {
-			// TODO: bundle marked as well
-			var renderer = new window.marked.Renderer();
+			var renderer = new marked.Renderer();
 			renderer.link = function(href, title, text) {
 				try {
 					var prot = decodeURIComponent(unescape(href))
@@ -193,8 +196,8 @@ export default {
 			renderer.blockquote = function(quote) {
 				return quote;
 			};
-			return DOMPurify.sanitize(
-				window.marked(this.app.description.trim(), {
+			return dompurify.sanitize(
+				marked(this.app.description.trim(), {
 					renderer: renderer,
 					gfm: false,
 					highlight: false,
@@ -224,3 +227,17 @@ export default {
 	}
 }
 </script>
+
+<style scoped>
+	.force {
+		background: var(--color-main-background);
+		border-color: var(--color-error);
+		color: var(--color-error);
+	}
+	.force:hover,
+	.force:active {
+		background: var(--color-error);
+		border-color: var(--color-error) !important;
+		color: var(--color-main-background);
+	}
+</style>

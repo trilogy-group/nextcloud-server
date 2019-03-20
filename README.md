@@ -45,7 +45,7 @@ There are many ways to contribute, of which development is only one! Find out [h
 
 ### Development setup 👩‍💻
 
-1. 🚀 [Set up your local development environment](https://docs.nextcloud.com/server/14/developer_manual/general/devenv.html)
+1. 🚀 [Set up your local development environment](https://docs.nextcloud.com/server/latest/developer_manual/general/devenv.html)
 2. 🐛 [Pick a good first issue](https://github.com/nextcloud/server/labels/good%20first%20issue)
 3. 👩‍🔧 Create a branch and make your changes. Remember to sign off your commits using `git commit -sm "Your commit message"`
 4. ⬆ Create a [pull request](https://opensource.guide/how-to-contribute/#opening-a-pull-request) and `@mention` the people from the issue to review
@@ -61,7 +61,7 @@ Otherwise, git checkouts can be handled the same as release archives, by using t
 
 ### Building front-end code 🏗
 
-We move more and more towards using Vue.js in the frontend, starting with Settings. For building the code on changes, use these terminal commands in the `settings` subfolder:
+We move more and more towards using Vue.js in the frontend, starting with Settings. For building the code on changes, use these terminal commands in the root folder:
 
 ``` bash
 # install dependencies
@@ -75,9 +75,6 @@ make watch-js
 
 # build for production with minification
 make build-js-production
-
-# clean output files
-make clean
 ```
 
 **When making changes, also commit the compiled files!**

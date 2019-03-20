@@ -92,8 +92,6 @@ class SetupController {
 		);
 		$parameters = array_merge($defaults, $post);
 
-		\OC_Util::addVendorScript('strengthify/jquery.strengthify');
-		\OC_Util::addVendorStyle('strengthify/strengthify');
 		\OC_Util::addScript('setup');
 		\OC_Template::printGuestPage('', 'installation', $parameters);
 	}
@@ -108,7 +106,7 @@ class SetupController {
 
 	public function loadAutoConfig($post) {
 		if( file_exists($this->autoConfigFile)) {
-			\OCP\Util::writeLog('core', 'Autoconfig file found, setting up ownCloud…', ILogger::INFO);
+			\OCP\Util::writeLog('core', 'Autoconfig file found, setting up Nextcloud…', ILogger::INFO);
 			$AUTOCONFIG = array();
 			include $this->autoConfigFile;
 			$post = array_merge ($post, $AUTOCONFIG);

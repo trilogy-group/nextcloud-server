@@ -12,6 +12,8 @@
  * @author Stefan Weil <sw@weilnetz.de>
  * @author Thomas Citharel <tcit@tcit.fr>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
+ * @author Vinicius Cubas Brand <vinicius@eita.org.br>
+ * @author Daniel Tygel <dtygel@eita.org.br>
  *
  * @license AGPL-3.0
  *
@@ -301,6 +303,8 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 
 		// query for shared calendars
 		$principals = $this->principalBackend->getGroupMembership($principalUriOriginal, true);
+		$principals = array_merge($principals, $this->principalBackend->getCircleMembership($principalUriOriginal));
+
 		$principals = array_map(function($principal) {
 			return urldecode($principal);
 		}, $principals);
@@ -2519,6 +2523,23 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 		foreach($uris as $uri) {
 			$this->addChange($subscriptionId, $uri, 3, self::CALENDAR_TYPE_SUBSCRIPTION);
 		}
+	}
+
+	/**
+	 * Move a calendar from one user to another
+	 *
+	 * @param string $uriName
+	 * @param string $uriOrigin
+	 * @param string $uriDestination
+	 */
+	public function moveCalendar($uriName, $uriOrigin, $uriDestination)
+	{
+		$query = $this->db->getQueryBuilder();
+		$query->update('calendars')
+			->set('principaluri', $query->createNamedParameter($uriDestination))
+			->where($query->expr()->eq('principaluri', $query->createNamedParameter($uriOrigin)))
+			->andWhere($query->expr()->eq('uri', $query->createNamedParameter($uriName)))
+			->execute();
 	}
 
 	/**

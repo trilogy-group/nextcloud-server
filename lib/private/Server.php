@@ -58,6 +58,7 @@ use OC\AppFramework\Utility\SimpleContainer;
 use OC\AppFramework\Utility\TimeFactory;
 use OC\Authentication\LoginCredentials\Store;
 use OC\Authentication\Token\IProvider;
+use OC\Avatar\AvatarManager;
 use OC\Collaboration\Collaborators\GroupPlugin;
 use OC\Collaboration\Collaborators\MailPlugin;
 use OC\Collaboration\Collaborators\RemoteGroupPlugin;
@@ -141,8 +142,10 @@ use OCP\Files\NotFoundException;
 use OCP\Files\Storage\IStorageFactory;
 use OCP\FullTextSearch\IFullTextSearchManager;
 use OCP\GlobalScale\IConfig;
+use OCP\Group\ISubAdmin;
 use OCP\ICacheFactory;
 use OCP\IDBConnection;
+use OCP\IInitialStateService;
 use OCP\IL10N;
 use OCP\IServerContainer;
 use OCP\ITempManager;
@@ -313,14 +316,13 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerAlias('LazyRootFolder', \OCP\Files\IRootFolder::class);
 
 		$this->registerService(\OC\User\Manager::class, function (Server $c) {
-			$config = $c->getConfig();
-			return new \OC\User\Manager($config);
+			return new \OC\User\Manager($c->getConfig(), $c->getEventDispatcher());
 		});
 		$this->registerAlias('UserManager', \OC\User\Manager::class);
 		$this->registerAlias(\OCP\IUserManager::class, \OC\User\Manager::class);
 
 		$this->registerService(\OCP\IGroupManager::class, function (Server $c) {
-			$groupManager = new \OC\Group\Manager($this->getUserManager(), $this->getLogger());
+			$groupManager = new \OC\Group\Manager($this->getUserManager(), $c->getEventDispatcher(), $this->getLogger());
 			$groupManager->listen('\OC\Group', 'preCreate', function ($gid) {
 				\OC_Hook::emit('OC_Group', 'pre_createGroup', array('run' => true, 'gid' => $gid));
 			});
@@ -413,9 +415,9 @@ class Server extends ServerContainer implements IServerContainer {
 			$userSession->listen('\OC\User', 'preLogin', function ($uid, $password) {
 				\OC_Hook::emit('OC_User', 'pre_login', array('run' => true, 'uid' => $uid, 'password' => $password));
 			});
-			$userSession->listen('\OC\User', 'postLogin', function ($user, $password) {
+			$userSession->listen('\OC\User', 'postLogin', function ($user, $password, $isTokenLogin) {
 				/** @var $user \OC\User\User */
-				\OC_Hook::emit('OC_User', 'post_login', array('run' => true, 'uid' => $user->getUID(), 'password' => $password));
+				\OC_Hook::emit('OC_User', 'post_login', array('run' => true, 'uid' => $user->getUID(), 'password' => $password, 'isTokenLogin' => $isTokenLogin));
 			});
 			$userSession->listen('\OC\User', 'postRememberedLogin', function ($user, $password) {
 				/** @var $user \OC\User\User */
@@ -495,8 +497,6 @@ class Server extends ServerContainer implements IServerContainer {
 				ArrayCache::class
 			);
 			$config = $c->getConfig();
-			$request = $c->getRequest();
-			$urlGenerator = new URLGenerator($config, $arrayCacheFactory, $request);
 
 			if ($config->getSystemValue('installed', false) && !(defined('PHPUNIT_RUN') && PHPUNIT_RUN)) {
 				$v = \OC_App::getAppVersions();
@@ -553,7 +553,7 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerAlias(\OCP\Support\CrashReport\IRegistry::class, \OC\Support\CrashReport\Registry::class);
 
-		$this->registerService(\OCP\ILogger::class, function (Server $c) {
+		$this->registerService(\OC\Log::class, function (Server $c) {
 			$logType = $c->query('AllConfig')->getSystemValue('log_type', 'file');
 			$factory = new LogFactory($c, $this->getSystemConfig());
 			$logger = $factory->get($logType);
@@ -561,7 +561,8 @@ class Server extends ServerContainer implements IServerContainer {
 
 			return new Log($logger, $this->getSystemConfig(), null, $registry);
 		});
-		$this->registerAlias('Logger', \OCP\ILogger::class);
+		$this->registerAlias(\OCP\ILogger::class, \OC\Log::class);
+		$this->registerAlias('Logger', \OC\Log::class);
 
 		$this->registerService(ILogFactory::class, function (Server $c) {
 			return new LogFactory($c, $this->getSystemConfig());
@@ -960,14 +961,13 @@ class Server extends ServerContainer implements IServerContainer {
 					$c->getMemCacheFactory(),
 					new Util($c->getConfig(), $this->getAppManager(), $c->getAppDataDir('theming')),
 					new ImageManager($c->getConfig(), $c->getAppDataDir('theming'), $c->getURLGenerator(), $this->getMemCacheFactory(), $this->getLogger()),
-					$c->getAppManager()
+					$c->getAppManager(),
+					$c->getNavigationManager()
 				);
 			}
 			return new \OC_Defaults();
 		});
 		$this->registerService(SCSSCacher::class, function (Server $c) {
-			/** @var Factory $cacheFactory */
-			$cacheFactory = $c->query(Factory::class);
 			return new SCSSCacher(
 				$c->getLogger(),
 				$c->query(\OC\Files\AppData\Factory::class),
@@ -981,8 +981,6 @@ class Server extends ServerContainer implements IServerContainer {
 			);
 		});
 		$this->registerService(JSCombiner::class, function (Server $c) {
-			/** @var Factory $cacheFactory */
-			$cacheFactory = $c->query(Factory::class);
 			return new JSCombiner(
 				$c->getAppDataDir('js'),
 				$c->getURLGenerator(),
@@ -1089,6 +1087,8 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerAlias(\OCP\Collaboration\Collaborators\ISearchResult::class, \OC\Collaboration\Collaborators\SearchResult::class);
 
 		$this->registerAlias(\OCP\Collaboration\AutoComplete\IManager::class, \OC\Collaboration\AutoComplete\Manager::class);
+
+		$this->registerAlias(\OCP\Collaboration\Resources\IManager::class, \OC\Collaboration\Resources\Manager::class);
 
 		$this->registerService('SettingsManager', function (Server $c) {
 			$manager = new \OC\Settings\Manager(
@@ -1199,6 +1199,10 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->getConfig()
 			);
 		});
+
+		$this->registerAlias(ISubAdmin::class, SubAdmin::class);
+
+		$this->registerAlias(IInitialStateService::class, InitialStateService::class);
 
 		$this->connectDispatcher();
 	}

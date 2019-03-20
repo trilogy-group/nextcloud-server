@@ -21,9 +21,9 @@ OC.L10N.register(
     "A PHP extension stopped the file upload" : "PHP-laajennus pysäytti tiedoston lähettämisen",
     "No file uploaded" : "Ei tiedostoa lähetetty",
     "Unsupported image type" : "Ei-tuettu kuvatiedostomuoto",
-    "Theming" : "Teema",
     "Legal notice" : "Lainopillinen huomautus",
     "Privacy policy" : "Yksityisyyskäytäntö",
+    "Theming" : "Teema",
     "Adjust the Nextcloud theme" : "Mukauta Nextcloudin teemaa",
     "Theming makes it possible to easily customize the look and feel of your instance and supported clients. This will be visible for all users." : "Teeman avulla voit helposti kustomoida web-käyttöliittymän ja tuettujen sovelluksien ulkonäköä ja tuntumaa. Teema näkyy kaikille käyttäjille.",
     "Name" : "Nimi",
@@ -44,13 +44,11 @@ OC.L10N.register(
     "Upload new header logo" : "Lähetä uusi otsakelogo",
     "Favicon" : "Favicon",
     "Upload new favicon" : "Lähetä uusi favicon",
-    "You are already using a custom theme" : "Käytät jo kustomoitua ulkoasua",
-    "reset to default" : "palauta oletukseksi",
-    "Web address" : "Verkko-osoite",
-    "Web address https://…" : "Verkko-osoite https://…",
     "There is no error, the file uploaded with success" : "Ei virhettä, tiedosto lähetettiin onnistuneesti",
     "The uploaded file was only partially uploaded" : "Lähetetty tiedosto lähetettiin vain osittain",
     "Failed to write file to disk." : "Levylle kirjoittaminen epäonnistui.",
-    "A PHP extension stopped the file upload." : "PHP-laajennus pysäytti tiedoston lähetyksen."
+    "A PHP extension stopped the file upload." : "PHP-laajennus pysäytti tiedoston lähetyksen.",
+    "You are already using a custom theme" : "Käytät jo kustomoitua ulkoasua",
+    "Web address https://…" : "Verkko-osoite https://…"
 },
 "nplurals=2; plural=(n != 1);");

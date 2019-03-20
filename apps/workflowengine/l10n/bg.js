@@ -15,6 +15,7 @@ OC.L10N.register(
     "matches" : "съвпадения",
     "does not match" : "не съвпада",
     "Example: {placeholder}" : "Пример: {placeholder}",
+    "File name" : "Име на файл",
     "File size (upload)" : "Големина на файл (качване)",
     "less" : "по-малко",
     "less or equals" : "по-малко или равно",
@@ -64,8 +65,8 @@ OC.L10N.register(
     "Check %s does not exist" : "Проверка %s не съществува",
     "Check %s is invalid" : "Проверка %s е невалидна",
     "Check #%s does not exist" : "Проверка #%s не съществува",
-    "Workflow" : "Работен процес",
     "Open documentation" : "Отвори документация",
-    "Loading…" : "Зареждане..."
+    "Loading…" : "Зареждане...",
+    "Workflow" : "Работен процес"
 },
 "nplurals=2; plural=(n != 1);");

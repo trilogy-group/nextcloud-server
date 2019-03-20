@@ -36,6 +36,7 @@
 
 namespace OCA\DAV\Connector\Sabre;
 
+use Icewind\Streams\CallbackWrapper;
 use OC\AppFramework\Http\Request;
 use OC\Files\Filesystem;
 use OC\Files\View;
@@ -50,6 +51,7 @@ use OCP\Files\ForbiddenException;
 use OCP\Files\InvalidContentException;
 use OCP\Files\InvalidPathException;
 use OCP\Files\LockNotAcquiredException;
+use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\Files\Storage;
 use OCP\Files\StorageNotAvailableException;
@@ -165,10 +167,29 @@ class File extends Node implements IFile {
 			}
 
 			if ($partStorage->instanceOfStorage(Storage\IWriteStreamStorage::class)) {
-				$count = $partStorage->writeStream($internalPartPath, $data);
+
+				if (!is_resource($data)) {
+					$tmpData = fopen('php://temp', 'r+');
+					if ($data !== null) {
+						fwrite($tmpData, $data);
+						rewind($tmpData);
+					}
+					$data = $tmpData;
+				}
+
+				$isEOF = false;
+				$wrappedData = CallbackWrapper::wrap($data, null, null, null, null, function($stream) use (&$isEOF) {
+					$isEOF = feof($stream);
+				});
+
+				$count = $partStorage->writeStream($internalPartPath, $wrappedData);
 				$result = $count > 0;
+
 				if ($result === false) {
-					$result = feof($data);
+					$result = $isEOF;
+					if (is_resource($wrappedData)) {
+						$result = feof($wrappedData);
+					}
 				}
 
 			} else {
@@ -187,7 +208,9 @@ class File extends Node implements IFile {
 				if (isset($_SERVER['CONTENT_LENGTH'])) {
 					$expected = $_SERVER['CONTENT_LENGTH'];
 				}
-				throw new Exception('Error while copying file to target location (copied bytes: ' . $count . ', expected filesize: ' . $expected . ' )');
+				if ($expected !== "0") {
+					throw new Exception('Error while copying file to target location (copied bytes: ' . $count . ', expected filesize: ' . $expected . ' )');
+				}
 			}
 
 			// if content length is sent by client:
@@ -591,6 +614,9 @@ class File extends Node implements IFile {
 		}
 		if ($e instanceof StorageNotAvailableException) {
 			throw new ServiceUnavailable('Failed to write file contents: ' . $e->getMessage(), 0, $e);
+		}
+		if ($e instanceof NotFoundException) {
+			throw new NotFound('File not found: ' . $e->getMessage(), 0, $e);
 		}
 
 		throw new \Sabre\DAV\Exception($e->getMessage(), 0, $e);

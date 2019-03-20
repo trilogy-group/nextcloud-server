@@ -45,7 +45,7 @@ OC.L10N.register(
     "Search global and public address book for users" : "Rechercher dans le carnet d'adresse global et public pour les utilisateurs",
     "Allow users to publish their data to a global and public address book" : "Autoriser les utilisateurs à publier leurs données dans un carnet d'adresse global et public",
     "Federated Cloud" : "Cloud Fédéré",
-    "You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Vous pouvez partager avec n'importe qui utilisant Nextcloud, ownCloud ou Pydio ! Renseignez simplement leur ID de Cloud Fédéré dans la boîte de dialogue de partage. Il ressemble à person@cloud.example.com",
+    "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Vous pouvez partager avec quiconque utilise un serveur Nextcloud ou un serveur ou service compatible Open Cloud Mesh (OCM). Renseignez simplement son identifiant sur une instance fédérée dans la boîte de dialogue de partage. Cela prend la forme de utilisateur@cloud.exemple.com.",
     "Your Federated Cloud ID:" : "Votre identifiant de Cloud Fédéré :",
     "Share it so your friends can share files with you:" : "Partagez-le afin que vos amis puissent partager des fichiers avec vous :",
     "Add to your website" : "Ajouter à votre site web",
@@ -60,6 +60,6 @@ OC.L10N.register(
     "Couldn't add remote share" : "Impossible d'ajouter le partage distant",
     "Sharing %s failed, because this item is already shared with %s" : "Le partage de %s a échoué car cet élément est déjà partagé avec %s",
     "Sharing %s failed, could not find %s, maybe the server is currently unreachable or uses a self-signed certificate." : "Le partage de %s a échoué, impossible de trouver %s, le serveur est peut-être momentanément injoignable ou utilise un certificat auto-signé.",
-    "Search global and public address book for users and let local users publish their data" : "Rechercher dans le carnet d'adresse global et public pour les utilisateurs et laisser les utilisateurs publier leurs données"
+    "You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Vous pouvez partager avec n'importe qui utilisant Nextcloud, ownCloud ou Pydio ! Renseignez simplement leur ID de Cloud Fédéré dans la boîte de dialogue de partage. Il ressemble à person@cloud.example.com"
 },
 "nplurals=2; plural=(n > 1);");

@@ -37,6 +37,9 @@ class ExceptionSerializer {
 		'{closure}',
 		'createSessionToken',
 
+		// Provisioning
+		'addUser',
+
 		// TokenProvider
 		'getToken',
 		'isTokenPassword',
@@ -67,6 +70,12 @@ class ExceptionSerializer {
 		// Encryption
 		'storeKeyPair',
 		'setupUser',
+
+		// files_external: OC_Mount_Config
+		'getBackendStatus',
+
+		// files_external: UserStoragesController
+		'update',
 	];
 
 	private function filterTrace(array $trace) {

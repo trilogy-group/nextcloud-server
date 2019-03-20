@@ -68,9 +68,10 @@ OC.L10N.register(
     "Check %s does not exist" : "Athugunin %s er ekki til",
     "Check %s is invalid" : "Athugunin %s er ógild",
     "Check #%s does not exist" : "Athugunin #%s er ekki til",
-    "Workflow" : "Vinnuferli",
+    "Tag management" : "Sýsl með merki",
     "Files workflow engine" : "Verkferlavél skráa",
     "Open documentation" : "Opna hjálparskjöl",
-    "Loading…" : "Hleð inn..."
+    "Loading…" : "Hleð inn...",
+    "Workflow" : "Vinnuferli"
 },
 "nplurals=2; plural=(n % 10 != 1 || n % 100 == 11);");

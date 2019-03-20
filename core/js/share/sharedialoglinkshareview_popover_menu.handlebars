@@ -37,7 +37,6 @@
 				</span>
 			</li>
 		{{/if}}
-		{{#if showHideDownloadCheckbox}}
 			<li>
 				<span class="menuitem">
 					<span class="icon-loading-small hidden"></span>
@@ -46,8 +45,6 @@
 					<label for="sharingDialogHideDownload-{{cid}}">{{hideDownloadLabel}}</label>
 				</span>
 			</li>
-		{{/if}}
-		{{#if showPasswordCheckBox}}
 			<li>
 				<span class="menuitem">
 					<input type="checkbox" name="showPassword" id="showPassword-{{cid}}" class="checkbox showPasswordCheckbox"
@@ -58,10 +55,10 @@
 			<li class="{{#unless isPasswordSet}}hidden{{/unless}} linkPassMenu">
 				<span class="menuitem icon-share-pass">
 					<input id="linkPassText-{{cid}}" class="linkPassText" type="password" placeholder="{{passwordPlaceholder}}" autocomplete="new-password" />
+					<input type="submit" class="icon-confirm share-pass-submit" value="" />
 					<span class="icon icon-loading-small hidden"></span>
 				</span>
 			</li>
-		{{/if}}
 		{{#if showPasswordByTalkCheckBox}}
 			<li>
 				<span class="shareOption menuitem">

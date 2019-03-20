@@ -48,6 +48,7 @@ use OCA\Files_Trashbin\Command\Expire;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
+use OCP\Files\NotPermittedException;
 use OCP\User;
 
 class Trashbin {
@@ -414,6 +415,9 @@ class Trashbin {
 		$mtime = $view->filemtime($source);
 
 		// restore file
+		if (!$view->isCreatable(dirname($target))) {
+			throw new NotPermittedException("Can't restore trash item because the target folder is not writable");
+		}
 		$restoreResult = $view->rename($source, $target);
 
 		// handle the restore result
@@ -684,7 +688,7 @@ class Trashbin {
 			if(is_null($userFolder)) {
 				return 0;
 			}
-			$free = $quota - $userFolder->getSize(); // remaining free space for user
+			$free = $quota - $userFolder->getSize(false); // remaining free space for user
 			if ($free > 0) {
 				$availableSpace = ($free * self::DEFAULTMAXSIZE / 100) - $trashbinSize; // how much space can be used for versions
 			} else {

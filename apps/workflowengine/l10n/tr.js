@@ -68,9 +68,10 @@ OC.L10N.register(
     "Check %s does not exist" : "%s denetimi bulunamadı",
     "Check %s is invalid" : "%s denetimi geçersiz",
     "Check #%s does not exist" : "#%s denetimi bulunamadı",
-    "Workflow" : "İş akışı",
+    "Tag management" : "Etiket yönetimi",
     "Files workflow engine" : "Dosya iş akışı motoru",
     "Open documentation" : "Belgeleri aç",
-    "Loading…" : "Yükleniyor..."
+    "Loading…" : "Yükleniyor...",
+    "Workflow" : "İş akışı"
 },
 "nplurals=2; plural=(n > 1);");

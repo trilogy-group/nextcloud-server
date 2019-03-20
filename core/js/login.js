@@ -17,7 +17,9 @@ OC.Login = _.extend(OC.Login || {}, {
 		if($('form[name=login][action]').length === 0) {
 			$('#submit-wrapper .submit-icon')
 				.removeClass('icon-confirm-white')
-				.addClass('icon-loading-small-dark');
+				.addClass(OCA.Theming && OCA.Theming.inverted
+					? 'icon-loading-small'
+					: 'icon-loading-small-dark');
 			$('#submit')
 				.attr('value', t('core', 'Logging in …'));
 			$('.login-additional').fadeOut();
@@ -39,4 +41,10 @@ $(document).ready(function() {
 	$('form[name=login]').submit(OC.Login.onLogin);
 
 	$('#remember_login').click(OC.Login.rememberLogin);
+
+	var clearParamRegex = new RegExp('clear=1');
+	if (clearParamRegex.test(window.location.href)) {
+		window.localStorage.clear();
+		window.sessionStorage.clear();
+	}
 });

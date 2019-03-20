@@ -148,16 +148,19 @@ class CheckSetupControllerTest extends TestCase {
 				'hasWorkingFileLocking',
 				'getLastCronInfo',
 				'getSuggestedOverwriteCliURL',
-				'getOutdatedCaches',
 				'getCurlVersion',
 				'isPhpOutdated',
 				'isOpcacheProperlySetup',
 				'hasFreeTypeSupport',
 				'hasMissingIndexes',
 				'isSqliteUsed',
-				'isPhpMailerUsed',
+				'isPHPMailerUsed',
 				'hasOpcacheLoaded',
 				'getAppDirsWithDifferentOwner',
+				'hasRecommendedPHPModules',
+				'hasBigIntConversionPendingColumns',
+				'isMysqlUsedWithoutUTF8MB4',
+				'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed',
 			])->getMock();
 	}
 
@@ -189,10 +192,15 @@ class CheckSetupControllerTest extends TestCase {
 	}
 
 	public function testIsInternetConnectionWorkingCorrectly() {
-		$this->config->expects($this->once())
+		$this->config->expects($this->at(0))
 			->method('getSystemValue')
 			->with('has_internet_connection', true)
-			->will($this->returnValue(true));
+            ->will($this->returnValue(true));
+
+		$this->config->expects($this->at(1))
+			->method('getSystemValue')
+			->with('connectivity_check_domains', ['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org'])
+			->will($this->returnValue(['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org']));
 
 		$client = $this->getMockBuilder('\OCP\Http\Client\IClient')
 			->disableOriginalConstructor()->getMock();
@@ -213,10 +221,15 @@ class CheckSetupControllerTest extends TestCase {
 	}
 
 	public function testIsInternetConnectionFail() {
-		$this->config->expects($this->once())
+		$this->config->expects($this->at(0))
 			->method('getSystemValue')
 			->with('has_internet_connection', true)
-			->will($this->returnValue(true));
+            ->will($this->returnValue(true));
+
+		$this->config->expects($this->at(1))
+			->method('getSystemValue')
+			->with('connectivity_check_domains', ['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org'])
+			->will($this->returnValue(['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org']));
 
 		$client = $this->getMockBuilder('\OCP\Http\Client\IClient')
 			->disableOriginalConstructor()->getMock();
@@ -299,19 +312,21 @@ class CheckSetupControllerTest extends TestCase {
 	 * @dataProvider dataForwardedForHeadersWorking
 	 *
 	 * @param array $trustedProxies
-	 * @param string $remoteAddrNoForwarded
+	 * @param string $remoteAddrNotForwarded
 	 * @param string $remoteAddr
 	 * @param bool $result
 	 */
-	public function testForwardedForHeadersWorking(array $trustedProxies, string $remoteAddrNoForwarded, string $remoteAddr, bool $result) {
+	public function testForwardedForHeadersWorking(array $trustedProxies, string $remoteAddrNotForwarded, string $remoteAddr, bool $result) {
 		$this->config->expects($this->once())
 			->method('getSystemValue')
 			->with('trusted_proxies', [])
 			->willReturn($trustedProxies);
-		$this->request->expects($this->once())
+		$this->request->expects($this->atLeastOnce())
 			->method('getHeader')
-			->with('REMOTE_ADDR')
-			->willReturn($remoteAddrNoForwarded);
+			->willReturnMap([
+				['REMOTE_ADDR', $remoteAddrNotForwarded],
+				['X-Forwarded-Host', '']
+			]);
 		$this->request->expects($this->any())
 			->method('getRemoteAddress')
 			->willReturn($remoteAddr);
@@ -332,6 +347,27 @@ class CheckSetupControllerTest extends TestCase {
 		];
 	}
 
+	public function testForwardedHostPresentButTrustedProxiesEmpty() {
+		$this->config->expects($this->once())
+			->method('getSystemValue')
+			->with('trusted_proxies', [])
+			->willReturn([]);
+		$this->request->expects($this->atLeastOnce())
+			->method('getHeader')
+			->willReturnMap([
+				['REMOTE_ADDR', '1.1.1.1'],
+				['X-Forwarded-Host', 'nextcloud.test']
+			]);
+		$this->request->expects($this->any())
+			->method('getRemoteAddress')
+			->willReturn('1.1.1.1');
+
+		$this->assertEquals(
+			false,
+			self::invokePrivate($this->checkSetupController, 'forwardedForHeadersWorking')
+		);
+	}
+
 	public function testCheck() {
 		$this->config->expects($this->at(0))
 			->method('getAppValue')
@@ -339,21 +375,27 @@ class CheckSetupControllerTest extends TestCase {
 			->willReturn('');
 		$this->config->expects($this->at(2))
 			->method('getSystemValue')
+			->with('connectivity_check_domains', ['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org'])
+			->will($this->returnValue(['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org']));
+		$this->config->expects($this->at(3))
+			->method('getSystemValue')
 			->with('memcache.local', null)
 			->will($this->returnValue('SomeProvider'));
-		$this->config->expects($this->at(3))
+		$this->config->expects($this->at(4))
 			->method('getSystemValue')
 			->with('has_internet_connection', true)
 			->will($this->returnValue(true));
-		$this->config->expects($this->at(4))
+		$this->config->expects($this->at(5))
 			->method('getSystemValue')
 			->with('appstoreenabled', true)
 			->will($this->returnValue(false));
 
-		$this->request->expects($this->once())
+		$this->request->expects($this->atLeastOnce())
 			->method('getHeader')
-			->with('REMOTE_ADDR')
-			->willReturn('4.3.2.1');
+			->willReturnMap([
+				['REMOTE_ADDR', '4.3.2.1'],
+				['X-Forwarded-Host', '']
+			]);
 
 		$client = $this->getMockBuilder('\OCP\Http\Client\IClient')
 			->disableOriginalConstructor()->getMock();
@@ -419,9 +461,6 @@ class CheckSetupControllerTest extends TestCase {
 			->method('hasMissingIndexes')
 			->willReturn([]);
 		$this->checkSetupController
-			->method('getOutdatedCaches')
-			->willReturn([]);
-		$this->checkSetupController
 			->method('isSqliteUsed')
 			->willReturn(false);
 		$this->checkSetupController
@@ -458,7 +497,7 @@ class CheckSetupControllerTest extends TestCase {
 			]);
 		$this->checkSetupController
 			->expects($this->once())
-			->method('isPhpMailerUsed')
+			->method('isPHPMailerUsed')
 			->willReturn(false);
 		$this->checker
 			->expects($this->once())
@@ -473,12 +512,31 @@ class CheckSetupControllerTest extends TestCase {
 			->method('getAppDirsWithDifferentOwner')
 			->willReturn([]);
 
+		$this->checkSetupController
+			->expects($this->once())
+			->method('hasRecommendedPHPModules')
+			->willReturn([]);
+
+		$this->checkSetupController
+			->expects($this->once())
+			->method('hasBigIntConversionPendingColumns')
+			->willReturn([]);
+
+		$this->checkSetupController
+			->expects($this->once())
+			->method('isMysqlUsedWithoutUTF8MB4')
+			->willReturn(false);
+
+		$this->checkSetupController
+			->expects($this->once())
+			->method('isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed')
+			->willReturn(true);
+
 		$expected = new DataResponse(
 			[
 				'isGetenvServerWorking' => true,
 				'isReadOnlyConfig' => false,
 				'hasValidTransactionIsolationLevel' => true,
-				'outdatedCaches' => [],
 				'hasFileinfoInstalled' => true,
 				'hasWorkingFileLocking' => true,
 				'suggestedOverwriteCliURL' => '',
@@ -511,13 +569,51 @@ class CheckSetupControllerTest extends TestCase {
 				'isSqliteUsed' => false,
 				'databaseConversionDocumentation' => 'http://docs.example.org/server/go.php?to=admin-db-conversion',
 				'missingIndexes' => [],
-				'isPhpMailerUsed' => false,
+				'isPHPMailerUsed' => false,
 				'mailSettingsDocumentation' => 'https://server/index.php/settings/admin',
 				'isMemoryLimitSufficient' => true,
 				'appDirsWithDifferentOwner' => [],
+				'recommendedPHPModules' => [],
+				'pendingBigIntConversionColumns' => [],
+				'isMysqlUsedWithoutUTF8MB4' => false,
+				'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed' => true,
 			]
 		);
 		$this->assertEquals($expected, $this->checkSetupController->check());
+	}
+
+	public function testIsPHPMailerUsed() {
+		$checkSetupController = $this->getMockBuilder('\OC\Settings\Controller\CheckSetupController')
+			->setConstructorArgs([
+				'settings',
+				$this->request,
+				$this->config,
+				$this->clientService,
+				$this->urlGenerator,
+				$this->util,
+				$this->l10n,
+				$this->checker,
+				$this->logger,
+				$this->dispatcher,
+				$this->db,
+				$this->lockingProvider,
+				$this->dateTimeFormatter,
+				$this->memoryInfo,
+				$this->secureRandom,
+			])
+			->setMethods(null)->getMock();
+
+		$this->config->expects($this->at(0))
+			->method('getSystemValue')
+			->with('mail_smtpmode', 'smtp')
+			->will($this->returnValue('php'));
+		$this->config->expects($this->at(1))
+			->method('getSystemValue')
+			->with('mail_smtpmode', 'smtp')
+			->will($this->returnValue('not-php'));
+
+		$this->assertTrue($this->invokePrivate($checkSetupController, 'isPHPMailerUsed'));
+		$this->assertFalse($this->invokePrivate($checkSetupController, 'isPHPMailerUsed'));
 	}
 
 	public function testGetCurlVersion() {
@@ -1261,5 +1357,103 @@ Array
 				]
 		);
 		$this->assertEquals($expected, $this->checkSetupController->getFailedIntegrityCheckFiles());
+	}
+
+	public function dataForIsMysqlUsedWithoutUTF8MB4() {
+		return [
+			['sqlite', false, false],
+			['sqlite', true, false],
+			['postgres', false, false],
+			['postgres', true, false],
+			['oci', false, false],
+			['oci', true, false],
+			['mysql', false, true],
+			['mysql', true, false],
+		];
+	}
+
+	/**
+	 * @dataProvider dataForIsMysqlUsedWithoutUTF8MB4
+	 */
+	public function testIsMysqlUsedWithoutUTF8MB4(string $db, bool $useUTF8MB4, bool $expected) {
+		$this->config->method('getSystemValue')
+			->will($this->returnCallback(function($key, $default) use ($db, $useUTF8MB4) {
+				if ($key === 'dbtype') {
+					return $db;
+				}
+				if ($key === 'mysql.utf8mb4') {
+					return $useUTF8MB4;
+				}
+				return $default;
+			}));
+
+		$checkSetupController = new CheckSetupController(
+				'settings',
+				$this->request,
+				$this->config,
+				$this->clientService,
+				$this->urlGenerator,
+				$this->util,
+				$this->l10n,
+				$this->checker,
+				$this->logger,
+				$this->dispatcher,
+				$this->db,
+				$this->lockingProvider,
+				$this->dateTimeFormatter,
+				$this->memoryInfo,
+				$this->secureRandom
+			);
+
+		$this->assertSame($expected, $this->invokePrivate($checkSetupController, 'isMysqlUsedWithoutUTF8MB4'));
+	}
+
+	public function dataForIsEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed() {
+		return [
+			['singlebucket', 'OC\\Files\\ObjectStore\\Swift', true],
+			['multibucket', 'OC\\Files\\ObjectStore\\Swift', true],
+			['singlebucket', 'OC\\Files\\ObjectStore\\Custom', true],
+			['multibucket', 'OC\Files\\ObjectStore\\Custom', true],
+			['singlebucket', 'OC\Files\ObjectStore\Swift', true],
+			['multibucket', 'OC\Files\ObjectStore\Swift', true],
+			['singlebucket', 'OC\Files\ObjectStore\Custom', true],
+			['multibucket', 'OC\Files\ObjectStore\Custom', true],
+		];
+	}
+
+	/**
+	 * @dataProvider dataForIsEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed
+	 */
+	public function testIsEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed(string $mode, string $className, bool $expected) {
+		$this->config->method('getSystemValue')
+			->will($this->returnCallback(function($key, $default) use ($mode, $className) {
+				if ($key === 'objectstore' && $mode === 'singlebucket') {
+					return ['class' => $className];
+				}
+				if ($key === 'objectstore_multibucket' && $mode === 'multibucket') {
+					return ['class' => $className];
+				}
+				return $default;
+			}));
+
+		$checkSetupController = new CheckSetupController(
+			'settings',
+			$this->request,
+			$this->config,
+			$this->clientService,
+			$this->urlGenerator,
+			$this->util,
+			$this->l10n,
+			$this->checker,
+			$this->logger,
+			$this->dispatcher,
+			$this->db,
+			$this->lockingProvider,
+			$this->dateTimeFormatter,
+			$this->memoryInfo,
+			$this->secureRandom
+		);
+
+		$this->assertSame($expected, $this->invokePrivate($checkSetupController, 'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed'));
 	}
 }

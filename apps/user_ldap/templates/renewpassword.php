@@ -1,15 +1,9 @@
 <?php /** @var $l OC_L10N */ ?>
 <?php
-script('core', [
-	'jquery-showpassword',
-]);
 script('user_ldap', [
 	'renewPassword',
 ]);
 style('user_ldap', 'renewPassword');
-\OC_Util::addVendorScript('strengthify/jquery.strengthify');
-\OC_Util::addVendorStyle('strengthify/strengthify');
-
 ?>
 
 <!--[if IE 8]><style>input[type="checkbox"]{padding:0;}</style><![endif]-->

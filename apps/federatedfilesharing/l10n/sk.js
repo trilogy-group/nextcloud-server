@@ -18,6 +18,8 @@ OC.L10N.register(
     "Couldn't establish a federated share, maybe the password was wrong." : "Nepodarilo sa nadviazať združené zdieľanie, možno je nesprávne heslo.",
     "Federated Share request sent, you will receive an invitation. Check your notifications." : "Požiadavka na združené zdieľanie bola odoslaná, obdržíte pozvánku. Skontrolujte oznámenia.",
     "Couldn't establish a federated share, it looks like the server to federate with is too old (Nextcloud <= 9)." : "Nepodarilo sa nadviazať združené zdieľanie, pravdepodobne je verzia servera s ktorým chcete zdieľať príliš zastaraná (Nextcloud <= 9).",
+    "It is not allowed to send federated group shares from this server." : "Z tohto servera nie je povolené odosielať združené sprístupnenia.",
+    "Sharing %1$s failed, because this item is already shared with %2$s" : "Sprístupnenie %1$s zlyhalo, pretože táto položka už je prístupná pre %2$s",
     "Not allowed to create a federated share with the same user" : "Nie je možné vytvoriť združené sprístupnenie so sebou samým",
     "File is already shared with %s" : "Súbor je už sprístupnený používateľovi %s",
     "Could not find share" : "Nebolo možné nájsť sprístupnenie",
@@ -39,7 +41,6 @@ OC.L10N.register(
     "Search global and public address book for users" : "Vyhľadávať používateľov v globálnom a verejnom adresári kontaktov",
     "Allow users to publish their data to a global and public address book" : "Povoliť používateľom publikovanie ich dát do globálneho a verejného adresára",
     "Federated Cloud" : "Združený Cloud",
-    "You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Môžete zdieľať s kýmkoľvek kto používa Nextcloud, ownCloud alebo Pydio! Len zadajte ich združené Cloud ID v dialógu pre zdieľanie. Vyzerá podobne ako person@cloud.example.com",
     "Your Federated Cloud ID:" : "Vaše združené Cloud ID",
     "Share it so your friends can share files with you:" : "Zdieľajte to, aby mohli vaši priatelia zdieľať súbory s vami:",
     "Add to your website" : "Pridať na svoju webstránku",
@@ -54,6 +55,6 @@ OC.L10N.register(
     "Couldn't add remote share" : "Nedá sa pridať vzdialené sprístupnenie",
     "Sharing %s failed, because this item is already shared with %s" : "Sprístupnenie %s zlyhalo, pretože táto položka už je prístupná pre %s",
     "Sharing %s failed, could not find %s, maybe the server is currently unreachable or uses a self-signed certificate." : "Zdieľanie %s zlyhalo, %s sa nepodarilo nájsť, server nie je pravdepodobne dostupný alebo používa vlastnoručne podpísaný certifikát.",
-    "Search global and public address book for users and let local users publish their data" : "Vyhľadávať používateľog v globálnom a verejnom adresári a umožniť miestnym používateľom publikovať ich dáta"
+    "You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Môžete zdieľať s kýmkoľvek kto používa Nextcloud, ownCloud alebo Pydio! Len zadajte ich združené Cloud ID v dialógu pre zdieľanie. Vyzerá podobne ako person@cloud.example.com"
 },
 "nplurals=4; plural=(n % 1 == 0 && n == 1 ? 0 : n % 1 == 0 && n >= 2 && n <= 4 ? 1 : n % 1 != 0 ? 2: 3);");

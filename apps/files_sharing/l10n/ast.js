@@ -17,7 +17,6 @@ OC.L10N.register(
     "Failed to add the public link to your Nextcloud" : "Fallu al amestar l'enllaz públicu al to Nextcloud",
     "No expiration date set" : "Nun s'afitó la data de caducidá",
     "Shared by" : "Compartíos por",
-    "Sharing" : "Compartiendo",
     "File shares" : "Comparticiones de ficheros",
     "Downloaded via public link" : "Baxóse per enllaz públicu",
     "Downloaded by {email}" : "Baxóse per {email}",
@@ -66,6 +65,7 @@ OC.L10N.register(
     "Cannot increase permissions" : "Nun puen aumentase los permisos",
     "Direct link" : "Enllaz direutu",
     "Share API is disabled" : "L'API de compartición ta desactivada",
+    "Sharing" : "Compartiendo",
     "No entries found in this folder" : "Nenguna entrada en esta carpeta",
     "Name" : "Nome",
     "Share time" : "Compartir hora",
@@ -80,7 +80,6 @@ OC.L10N.register(
     "Select or drop files" : "Esbilla o suelta ficheros",
     "Uploading files…" : "Xubiendo ficheros...",
     "Uploaded files:" : "Ficheros xubíos:",
-    "{actor} removed you from {file}" : "{actor} desanicióte de {file}",
     "This share is password-protected" : "Esta compartición tien contraseña protexida",
     "The password is wrong. Try again." : "La contraseña ye incorreuta. Inténtalo otra vegada.",
     "Password" : "Contraseña"

@@ -144,18 +144,28 @@ form #datadirField legend {
 /* Buttons and input */
 #submit-wrapper,
 #reset-password-wrapper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	position: relative; /* Make the wrapper the containing block of its
 						   absolutely positioned descendant icons */
 }
 
 #submit-wrapper .submit-icon {
 	position: absolute;
-	top: 23px;
-	right: 23px;
+	top: 22px;
+	right: 24px;
+	transition: right 100ms ease-in-out;
 	pointer-events: none; /* The submit icon is positioned on the submit button.
 							 From the user point of view the icon is part of the
 							 button, so the clicks on the icon have to be
 							 applied to the button instead. */
+}
+
+#submit-wrapper input.login:hover ~ .submit-icon.icon-confirm-white,
+#submit-wrapper input.login:focus ~ .submit-icon.icon-confirm-white,
+#submit-wrapper input.login:active ~ .submit-icon.icon-confirm-white {
+	right: 20px;
 }
 
 #reset-password-submit {
@@ -171,8 +181,9 @@ form #datadirField legend {
 #submit-wrapper .icon-loading-small {
 	position: absolute;
 	top: 22px;
-	right: 24px;
+	right: 26px;
 }
+
 
 input, textarea, select, button, div[contenteditable=true] {
 	font-family: 'Nunito', 'Open Sans', Frutiger, Calibri, 'Myriad Pro', Myriad, sans-serif;
@@ -191,6 +202,7 @@ input[type='submit'],
 input[type='submit'].icon-confirm,
 input[type='button'],
 button,
+a.button,
 .button,
 select {
 	display: inline-block;
@@ -220,7 +232,8 @@ input[type='email'] {
 	font-weight: normal;
 }
 input.login {
-	width: 269px;
+	width: 260px;
+	height: 50px;
 	background-position: right 16px center;
 }
 input[type='submit'],
@@ -253,6 +266,7 @@ a.primary {
 	border: 1px solid #fff;
 	background-color: #0082c9;
 	color: #fff;
+	transition: color 100ms ease-in-out;
 }
 
 input.primary:not(:disabled):hover,
@@ -260,8 +274,8 @@ input.primary:not(:disabled):focus,
 button.primary:not(:disabled):hover,
 button.primary:not(:disabled):focus,
 a.primary:not(:disabled):hover,
-a.primary:not(:disabled):focus{
-	background-color: #17adff;
+a.primary:not(:disabled):focus {
+	color: rgba(255, 255, 255, .8);
 }
 
 /* Checkboxes - white only for login */
@@ -317,12 +331,6 @@ input[type='checkbox'].checkbox--white:checked + label:before {
 	background-image: url('../img/actions/checkbox-mark-white.svg');
 }
 
-
-/* keep the labels for screen readers but hide them since we use placeholders */
-label.infield {
-	display: none;
-}
-
 /* Password strength meter */
 .strengthify-wrapper {
 	display: inline-block;
@@ -348,9 +356,6 @@ label.infield {
 	top: .8em;
 	float: right;
 }
-#show, #dbpassword-toggle, #personal-show {
-	display: none;
-}
 #show + label, #dbpassword-toggle + label {
 	right: 21px;
 	top: 15px !important;
@@ -371,6 +376,11 @@ label.infield {
 }
 #show + label:before, #dbpassword-toggle + label:before, #personal-show + label:before {
 	display: none;
+}
+/* Feedback for keyboard focus and mouse hover */
+#show:focus + label, #dbpassword-toggle:focus + label, #personal-show:focus + label,
+#show + label:hover, #dbpassword-toggle + label:hover, #personal-show + label:hover {
+  opacity: 1;
 }
 #pass2, input[name='personal-password-clone'] {
 	padding: .6em 2.5em .4em .4em;
@@ -524,15 +534,20 @@ form #selectDbType label {
 	color:#888;
 	cursor:pointer;
 	border: 1px solid #ddd;
-}
-form #selectDbType label span {
-	cursor: pointer;
 	padding: 10px 17px;
 }
 form #selectDbType label.ui-state-hover,
 form #selectDbType label.ui-state-active {
+	font-weight: normal;
 	color:#000;
-	background-color:#e8e8e8; }
+	background-color:#e8e8e8;
+}
+form #selectDbType .ui-visual-focus {
+	box-shadow: none;
+}
+form #selectDbType label span {
+	display: none;
+}
 
 /* Nicely grouping input field sets */
 .grouptop,
@@ -594,6 +609,7 @@ form #selectDbType label.ui-state-active {
 .warning h2,
 .update h2,
 .error h2 {
+	color: #fff;
 	text-align: center;
 }
 
@@ -821,6 +837,8 @@ footer .info .entity-name {
 	display: none;
 }
 
+/* keep the labels for screen readers but hide them since we use placeholders */
+label.infield,
 .hidden-visually {
 	position: absolute;
 	left:-10000px;

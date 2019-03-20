@@ -23,9 +23,9 @@ OC.L10N.register(
     "No file uploaded" : "לא הועלה קובץ",
     "Unsupported image type" : "סוג התמונה לא נתמך",
     "You are already using a custom theme. Theming app settings might be overwritten by that." : "כבר נעשה שימוש בערכת עיצוב מותאמת אישית. יכול להיות שהגדרות יישומון ערכות העיצוב יידרסו.",
-    "Theming" : "ערכות נושא",
     "Legal notice" : "הצהרה משפטית",
     "Privacy policy" : "מדיניות פרטיות",
+    "Theming" : "ערכות נושא",
     "Adjust the Nextcloud theme" : "התאמת ערכת העיצוב של Nextcloud",
     "Theming makes it possible to easily customize the look and feel of your instance and supported clients. This will be visible for all users." : "עם ערכות עיצוב ניתן להתאים את המראה והתחושה של המערכת ושל הלקוחות הנתמכים שלך. אלו תהיינה גלויות לכל המשתמשים.",
     "Name" : "שם",
@@ -47,13 +47,11 @@ OC.L10N.register(
     "Favicon" : "סמל כותרת",
     "Upload new favicon" : "העלאת סמל כותרת חדש",
     "Install the Imagemagick PHP extension with support for SVG images to automatically generate favicons based on the uploaded logo and color." : "יש להתקין את הרחבת ה־PHP של Imagemagick עם תמיכה בתמונות SVG כדי לייצר תמונות מועדפים אוטומטיות על בסיס הלוגו שהועלה והצבע.",
-    "You are already using a custom theme" : "כבר החלת ערכת עיצוב בהתאמה אישית",
-    "reset to default" : "איפוס לבררת מחדל",
-    "Web address" : "כתובת",
-    "Web address https://…" : "כתובת https://…‎",
     "There is no error, the file uploaded with success" : "אין אף תקלה, הקובץ הועלה בהצלחה",
     "The uploaded file was only partially uploaded" : "הקובץ הועלה באופן חלקי בלבד",
     "Failed to write file to disk." : "הכתיבה לכונן נכשלה.",
-    "A PHP extension stopped the file upload." : "הרחבת PHP עצרה את העלאת הקובץ."
+    "A PHP extension stopped the file upload." : "הרחבת PHP עצרה את העלאת הקובץ.",
+    "You are already using a custom theme" : "כבר החלת ערכת עיצוב בהתאמה אישית",
+    "Web address https://…" : "כתובת https://…‎"
 },
 "nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n == 2 && n % 1 == 0) ? 1: (n % 10 == 0 && n % 1 == 0 && n > 10) ? 2 : 3;");

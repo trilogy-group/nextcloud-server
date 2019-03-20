@@ -35,6 +35,7 @@ namespace OCA\DAV;
 use OCA\DAV\CalDAV\BirthdayService;
 use OCA\DAV\CardDAV\ImageExportPlugin;
 use OCA\DAV\CardDAV\MultiGetExportPlugin;
+use OCA\DAV\CardDAV\HasPhotoPlugin;
 use OCA\DAV\CardDAV\PhotoCache;
 use OCA\DAV\Comments\CommentsPlugin;
 use OCA\DAV\Connector\Sabre\Auth;
@@ -55,6 +56,7 @@ use OCA\DAV\Connector\Sabre\QuotaPlugin;
 use OCA\DAV\Files\BrowserErrorPagePlugin;
 use OCA\DAV\Connector\Sabre\AnonymousOptionsPlugin;
 use OCA\DAV\Files\LazySearchBackend;
+use OCA\DAV\Provisioning\Apple\AppleProvisioningPlugin;
 use OCA\DAV\SystemTag\SystemTagPlugin;
 use OCA\DAV\Upload\ChunkingPlugin;
 use OCP\IRequest;
@@ -62,6 +64,7 @@ use OCP\SabrePluginEvent;
 use Sabre\CardDAV\VCFExportPlugin;
 use Sabre\DAV\Auth\Plugin;
 use OCA\DAV\Connector\Sabre\TagsPlugin;
+use Sabre\DAV\UUIDUtil;
 use SearchDAV\DAV\SearchPlugin;
 use OCA\DAV\AppInfo\PluginManager;
 
@@ -167,7 +170,11 @@ class Server {
 			$this->server->addPlugin(new \OCA\DAV\CardDAV\Plugin());
 			$this->server->addPlugin(new VCFExportPlugin());
 			$this->server->addPlugin(new MultiGetExportPlugin());
-			$this->server->addPlugin(new ImageExportPlugin(new PhotoCache(\OC::$server->getAppDataDir('dav-photocache'))));
+			$this->server->addPlugin(new HasPhotoPlugin());
+			$this->server->addPlugin(new ImageExportPlugin(new PhotoCache(
+				\OC::$server->getAppDataDir('dav-photocache'),
+				\OC::$server->getLogger())
+			));
 		}
 
 		// system tags plugins
@@ -264,7 +271,8 @@ class Server {
 						\OC::$server->getTagManager(),
 						$userSession,
 						\OC::$server->getGroupManager(),
-						$userFolder
+						$userFolder,
+						\OC::$server->getAppManager()
 					));
 					$lazySearchBackend->setBackend(new \OCA\DAV\Files\FileSearchBackend(
 						$this->server->tree,
@@ -277,6 +285,16 @@ class Server {
 				$this->server->addPlugin(new \OCA\DAV\CalDAV\BirthdayCalendar\EnablePlugin(
 					\OC::$server->getConfig(),
 					\OC::$server->query(BirthdayService::class)
+				));
+				$this->server->addPlugin(new AppleProvisioningPlugin(
+					\OC::$server->getUserSession(),
+					\OC::$server->getURLGenerator(),
+					\OC::$server->getThemingDefaults(),
+					\OC::$server->getRequest(),
+					\OC::$server->getL10N('dav'),
+					function() {
+						return UUIDUtil::getUUID();
+					}
 				));
 			}
 

@@ -22,18 +22,12 @@
  */
 
 script('settings', [
-	'authtoken',
-	'authtoken_collection',
 	'templates',
-	'authtoken_view',
-	'settings/authtoken-init'
+	'vue-settings-personal-security',
 ]);
 
 if($_['passwordChangeSupported']) {
 	script('settings', 'security_password');
-	script('jquery-showpassword');
-	vendor_script('strengthify/jquery.strengthify');
-	vendor_style('strengthify/strengthify');
 }
 
 ?>
@@ -54,7 +48,7 @@ if($_['passwordChangeSupported']) {
 						   placeholder="<?php p($l->t('New password')); ?>"
 						   data-typetoggle="#personal-show"
 						   autocomplete="off" autocapitalize="none" autocorrect="off" />
-					<input type="checkbox" id="personal-show" name="show" /><label for="personal-show" class="personal-show-label"></label>
+					<input type="checkbox" id="personal-show" class="hidden-visually" name="show" /><label for="personal-show" class="personal-show-label"></label>
 				</div>
 
 				<input id="passwordbutton" type="submit" value="<?php p($l->t('Change password')); ?>" />
@@ -65,45 +59,12 @@ if($_['passwordChangeSupported']) {
 </div>
 <?php } ?>
 
-<div id="security" class="section">
-	<h2><?php p($l->t('Devices & sessions'));?></h2>
-	<p class="settings-hint hidden-when-empty"><?php p($l->t('Web, desktop and mobile clients currently logged in to your account.'));?></p>
-	<table class="icon-loading">
-		<thead class="token-list-header">
-			<tr>
-				<th></th>
-				<th><?php p($l->t('Device'));?></th>
-				<th><?php p($l->t('Last activity'));?></th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody class="token-list">
-		</tbody>
-	</table>
-	<div id="app-password-form">
-		<input id="app-password-name" type="text" placeholder="<?php p($l->t('App name')); ?>">
-		<button id="add-app-password" class="button"><?php p($l->t('Create new app password')); ?></button>
-	</div>
-	<div id="app-password-result" class="hidden">
-		<span>
-			<?php p($l->t('Use the credentials below to configure your app or device.')); ?>
-			<?php p($l->t('For security reasons this password will only be shown once.')); ?>
-		</span>
-		<div class="app-password-row">
-			<span class="app-password-label"><?php p($l->t('Username')); ?></span>
-			<input id="new-app-login-name" type="text" readonly="readonly"/>
-		</div>
-		<div class="app-password-row">
-			<span class="app-password-label"><?php p($l->t('Password')); ?></span>
-			<input id="new-app-password" type="text" readonly="readonly"/>
-			<a class="clipboardButton icon icon-clippy" data-clipboard-target="#new-app-password"></a>
-			<button id="app-password-hide" class="button"><?php p($l->t('Done')); ?></button>
-		</div>
-	</div>
-</div>
-
 <div id="two-factor-auth" class="section">
 	<h2><?php p($l->t('Two-Factor Authentication'));?></h2>
+	<a target="_blank" rel="noreferrer noopener" class="icon-info"
+	   title="<?php p($l->t('Open documentation'));?>"
+	   href="<?php p(link_to_docs('user-2fa')); ?>"></a>
+	<p class="settings-hint"><?php p($l->t('Use a second factor besides your password to increase security for your account.'));?></p>
 	<ul>
 	<?php foreach ($_['twoFactorProviderData']['providers'] as $data) { ?>
 		<li>
@@ -127,3 +88,5 @@ if($_['passwordChangeSupported']) {
 	<?php } ?>
 	</ul>
 </div>
+
+<div id="security" class="section"></div>

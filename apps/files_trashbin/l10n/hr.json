@@ -1,13 +1,13 @@
 { "translations": {
     "Deleted files" : "Izbrisane datoteke",
-    "Restore" : "Obnovite",
-    "Delete" : "Izbrišite",
-    "Delete permanently" : "Trajno izbrišite",
     "restored" : "Obnovljeno",
+    "Restore" : "Obnovite",
+    "Delete permanently" : "Trajno izbrišite",
     "No entries found in this folder" : "Zapis nije pronadjen u ovom direktorijumu ",
     "Select all" : "Selektiraj sve",
     "Name" : "Naziv",
     "Deleted" : "Izbrisano",
+    "Delete" : "Izbrišite",
     "Couldn't delete %s permanently" : "Nije moguće trajno izbrisati %s",
     "Couldn't restore %s" : "Nije moguće obnoviti %s",
     "Error" : "Pogreška"

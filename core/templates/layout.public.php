@@ -9,7 +9,6 @@
 		?>
 	</title>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="referrer" content="never">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 	<meta name="apple-itunes-app" content="app-id=<?php p($theme->getiTunesAppId()); ?>">
 	<meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,6 +26,9 @@
 </head>
 <body id="<?php p($_['bodyid']);?>">
 <?php include('layout.noscript.warning.php'); ?>
+<?php foreach ($_['initialStates'] as $app => $initialState) { ?>
+	<input type="hidden" id="initial-state-<?php p($app); ?>" value="<?php p(base64_encode($initialState)); ?>">
+<?php }?>
 	<div id="notification-container">
 		<div id="notification"></div>
 	</div>
@@ -83,7 +85,9 @@
 		if ($_['showSimpleSignUpLink']) {
 			?>
 			<p>
-				<a href="https://nextcloud.com/signup/" target="_blank" rel="noreferrer noopener">Get your own free account</a>
+				<a href="https://nextcloud.com/signup/" target="_blank" rel="noreferrer noopener">
+					<?php p($l->t('Get your own free account')); ?>
+				</a>
 			</p>
 			<?php
 		}

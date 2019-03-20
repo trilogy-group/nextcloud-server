@@ -35,10 +35,11 @@ OC.L10N.register(
     "Adjust how people can share between servers." : "A szerverek közti megosztási lehetőségek beállítása",
     "Allow users on this server to send shares to other servers" : "Engedélyezze ezen szerver felhasználóinak, hogy fájlokat osszanak meg más szerverekkel.",
     "Allow users on this server to receive shares from other servers" : "Engedélyezze ezen szerver felhasználóinak, hogy megosztásokat fogadjanak más szerverektől",
+    "Allow users on this server to send shares to groups on other servers" : "Engedélyezze ezen szerver felhasználóinak, hogy megosztásokat küldjenek más szerverek csoportjainak",
+    "Allow users on this server to receive group shares from other servers" : "Engedélyezi ezen szerver felhasználóinak, hogy csoport megosztásokat fogadjanak más szerverektől",
     "Search global and public address book for users" : "Felhasználók keresése a globális és a nyilvános névjegyekben",
     "Allow users to publish their data to a global and public address book" : "Minden felhasználó a közös adattárolót és névjegyzéket használja",
     "Federated Cloud" : "Egyesített felhő",
-    "You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Bárkivel megoszthatsz aki Nextcloud-ot, ownCloud-ot vagy Pydio-t használ! Csak add meg az egységesített megosztási azonosítójukat a megosztási ablakban. Valahogy így néz ki: person@cloud.example.com",
     "Your Federated Cloud ID:" : "Egyesített felhő azonosító:",
     "Share it so your friends can share files with you:" : "Oszd meg, hogy a barátaid is megoszthassanak veled fájlokat:",
     "Add to your website" : "Adja hozzá saját weboldalához",
@@ -53,6 +54,6 @@ OC.L10N.register(
     "Couldn't add remote share" : "Távoli megosztás nem adható hozzá",
     "Sharing %s failed, because this item is already shared with %s" : "%s megosztása nem sikerült, mert ez már meg van osztva vele: %s",
     "Sharing %s failed, could not find %s, maybe the server is currently unreachable or uses a self-signed certificate." : "%s megosztása nem sikerült, mert %s nem található, lehetséges, hogy a szerver jelenleg nem érhető el vagy ön-aláírt tanúsítványt használ.",
-    "Search global and public address book for users and let local users publish their data" : "A központi és nyilvános névjegyzék keresése a felhasználóknak és a helyi felhasználók is hozzáadhatnak"
+    "You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "Bárkivel megoszthatsz aki Nextcloud-ot, ownCloud-ot vagy Pydio-t használ! Csak add meg az egységesített megosztási azonosítójukat a megosztási ablakban. Valahogy így néz ki: person@cloud.example.com"
 },
 "nplurals=2; plural=(n != 1);");

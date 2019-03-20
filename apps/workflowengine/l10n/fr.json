@@ -66,9 +66,10 @@
     "Check %s does not exist" : "Vérifiez si %s n'existe pas",
     "Check %s is invalid" : "Vérifiez si %s est invalide",
     "Check #%s does not exist" : "Vérifiez si #%s n'existe pas",
-    "Workflow" : "Flux d'activités",
+    "Tag management" : "Gestion des étiquettes",
     "Files workflow engine" : "Moteur de Workflow de fichiers",
     "Open documentation" : "Voir la documentation",
-    "Loading…" : "Chargement..."
+    "Loading…" : "Chargement...",
+    "Workflow" : "Flux d'activités"
 },"pluralForm" :"nplurals=2; plural=(n > 1);"
 }

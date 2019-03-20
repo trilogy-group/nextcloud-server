@@ -17,6 +17,7 @@ OC.L10N.register(
     "matches" : "passer",
     "does not match" : "passer ikke",
     "Example: {placeholder}" : "Eksempel: {placeholder}",
+    "File name" : "Filnavn",
     "File size (upload)" : "Filstørrelse (opplasting)",
     "less" : "mindre",
     "less or equals" : "mindre eller lik",
@@ -45,6 +46,7 @@ OC.L10N.register(
     "Android client" : "Android klient",
     "iOS client" : "iOS klient",
     "Desktop client" : "Skrivebordsklient",
+    "Thunderbird & Outlook addons" : "Thunderbird & Outlook tillegg",
     "User group membership" : "Brukerens gruppemedlemsskap",
     "is member of" : "er medlem av",
     "is not member of" : "er ikke medlem av",
@@ -66,9 +68,10 @@ OC.L10N.register(
     "Check %s does not exist" : "Sjekk %s finnes ikke",
     "Check %s is invalid" : "Sjekk %s er ugyldig",
     "Check #%s does not exist" : "Sjekk #%s finnes ikke",
-    "Workflow" : "Arbeidsflyt",
+    "Tag management" : "Merkelapphåndtering",
     "Files workflow engine" : "Arbeidsflytmotor for filer",
     "Open documentation" : "Åpne dokumentasjonen",
-    "Loading…" : "Laster…"
+    "Loading…" : "Laster…",
+    "Workflow" : "Arbeidsflyt"
 },
 "nplurals=2; plural=(n != 1);");

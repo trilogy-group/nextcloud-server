@@ -8,7 +8,10 @@ style('federatedfilesharing', 'settings-personal');
 <?php if ($_['outgoingServer2serverShareEnabled']): ?>
 	<div id="fileSharingSettings" class="section">
 		<h2 data-anchor-name="federated-cloud"><?php p($l->t('Federated Cloud')); ?></h2>
-		<p class="settings-hint"><?php p($l->t('You can share with anyone who uses Nextcloud, ownCloud or Pydio! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com')); ?></p>
+		<a target="_blank" rel="noreferrer noopener" class="icon-info svg"
+		title="<?php p($l->t('Open documentation'));?>"
+		href="<?php p(link_to_docs('user-sharing-federated')); ?>"></a>
+		<p class="settings-hint"><?php p($l->t('You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com')); ?></p>
 
 		<p>
 			<?php p($l->t('Your Federated Cloud ID:')); ?>
@@ -27,10 +30,6 @@ style('federatedfilesharing', 'settings-personal');
 			<button class="social-twitter pop-up"
 				data-url='https://twitter.com/intent/tweet?text=<?php p(urlencode($_['message_with_URL'])); ?>'>
 				Twitter
-			</button>
-			<button class="social-googleplus pop-up"
-				data-url='https://plus.google.com/share?url=<?php p(urlencode($_['reference'])); ?>'>
-				Google+
 			</button>
 			<button class="social-diaspora pop-up"
 					data-url='https://sharetodiaspora.github.io/?title=<?php p($_['message_without_URL']); ?>&url=<?php p(urlencode($_['reference'])); ?>'>

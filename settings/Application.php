@@ -28,9 +28,13 @@
 
 namespace OC\Settings;
 
+use BadMethodCallException;
 use OC\AppFramework\Utility\TimeFactory;
 use OC\Authentication\Token\IProvider;
+use OC\Authentication\Token\IToken;
 use OC\Server;
+use OC\Settings\Activity\GroupProvider;
+use OC\Settings\Activity\GroupSetting;
 use OC\Settings\Activity\Provider;
 use OC\Settings\Activity\SecurityFilter;
 use OC\Settings\Activity\SecurityProvider;
@@ -38,11 +42,17 @@ use OC\Settings\Activity\SecuritySetting;
 use OC\Settings\Activity\Setting;
 use OC\Settings\Mailer\NewUserMailHelper;
 use OC\Settings\Middleware\SubadminMiddleware;
+use OCP\Activity\IManager as IActivityManager;
 use OCP\AppFramework\App;
 use OCP\Defaults;
 use OCP\IContainer;
+use OCP\IGroup;
+use OCP\ILogger;
+use OCP\IUser;
 use OCP\Settings\IManager;
 use OCP\Util;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
  * @package OC\Settings
@@ -109,6 +119,31 @@ class Application extends App {
 				Util::getDefaultEmailAddress('no-reply')
 			);
 		});
+
+		/** @var EventDispatcherInterface $eventDispatcher */
+		$eventDispatcher = $container->getServer()->getEventDispatcher();
+		$eventDispatcher->addListener('app_password_created', function (GenericEvent $event) use ($container) {
+			if (($token = $event->getSubject()) instanceof IToken) {
+				/** @var IActivityManager $activityManager */
+				$activityManager = $container->query(IActivityManager::class);
+				/** @var ILogger $logger */
+				$logger = $container->query(ILogger::class);
+
+				$activity = $activityManager->generateEvent();
+				$activity->setApp('settings')
+					->setType('security')
+					->setAffectedUser($token->getUID())
+					->setAuthor($token->getUID())
+					->setSubject(Provider::APP_TOKEN_CREATED, ['name' => $token->getName()])
+					->setObject('app_token', $token->getId());
+
+				try {
+					$activityManager->publish($activity);
+				} catch (BadMethodCallException $e) {
+					$logger->logException($e, ['message' => 'could not publish activity', 'level' => ILogger::WARN]);
+				}
+			}
+		});
 	}
 
 	public function register() {
@@ -118,11 +153,30 @@ class Application extends App {
 		$activityManager->registerFilter(SecurityFilter::class); // FIXME move to info.xml
 		$activityManager->registerSetting(SecuritySetting::class); // FIXME move to info.xml
 		$activityManager->registerProvider(SecurityProvider::class); // FIXME move to info.xml
+		$activityManager->registerSetting(GroupSetting::class); // FIXME move to info.xml
+		$activityManager->registerProvider(GroupProvider::class); // FIXME move to info.xml
 
 		Util::connectHook('OC_User', 'post_setPassword', $this, 'onChangePassword');
 		Util::connectHook('OC_User', 'changeUser', $this, 'onChangeInfo');
 
+		$groupManager = $this->getContainer()->getServer()->getGroupManager();
+		$groupManager->listen('\OC\Group', 'postRemoveUser',  [$this, 'removeUserFromGroup']);
+		$groupManager->listen('\OC\Group', 'postAddUser',  [$this, 'addUserToGroup']);
+
 		Util::connectHook('\OCP\Config', 'js', $this, 'extendJsConfig');
+	}
+
+	public function addUserToGroup(IGroup $group, IUser $user): void {
+		/** @var Hooks $hooks */
+		$hooks = $this->getContainer()->query(Hooks::class);
+		$hooks->addUserToGroup($group, $user);
+		
+	}
+
+	public function removeUserFromGroup(IGroup $group, IUser $user): void {
+		/** @var Hooks $hooks */
+		$hooks = $this->getContainer()->query(Hooks::class);
+		$hooks->removeUserFromGroup($group, $user);
 	}
 
 	/**

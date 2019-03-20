@@ -100,11 +100,12 @@
 							displayName:  t('files', 'Download'),
 							iconClass: 'icon-download',
 						},
+						OCA.Files.FileList.MultiSelectMenuActions.ToggleSelectionModeAction,
 						{
 							name: 'delete',
 							displayName: t('files', 'Delete'),
 							iconClass: 'icon-delete',
-						}
+						},
 					],
 					sorting: {
 						mode: $('#defaultFileSorting').val(),
@@ -133,7 +134,10 @@
 
 			this._debouncedPersistShowHiddenFilesState = _.debounce(this._persistShowHiddenFilesState, 1200);
 
-			OCP.WhatsNew.query(); // for Nextcloud server
+			if (sessionStorage.getItem('WhatsNewServerCheck') < (Date.now() - 3600*1000)) {
+				OCP.WhatsNew.query(); // for Nextcloud server
+				sessionStorage.setItem('WhatsNewServerCheck', Date.now());
+			}
 		},
 
 		/**
