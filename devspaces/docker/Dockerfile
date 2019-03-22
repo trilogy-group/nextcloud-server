@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 COPY ./docker/artifacts/apache2.conf /etc/apache2/apache2.conf
 COPY ./docker/artifacts/000-default.conf /etc/apache2/sites-available/000-default.conf
 
-RUN apt-get update && apt-get install -y libxml2-dev libpng-dev software-properties-common && \
+RUN apt-get update && apt-get install -y libxml2-dev git libpng-dev software-properties-common && \
     docker-php-ext-install ctype dom gd iconv posix simplexml xmlwriter zip pdo_mysql && \
     apt-get clean && \
     mkdir /data && \
